@@ -20,6 +20,11 @@ Reimplementation of [directed-graph-creator](https://github.com/cjrd/directed-gr
 * ES6 syntax and D3 v6
 
 
+## Issues / todo
+* Need to prohibit doc to doc and ent to ent links
+* edge attributes 
+* some bug when creating entities causing it to be "sticky"
+
 ## License 
 
 MIT-licensed, as the original.
