@@ -39,7 +39,7 @@ class Graph {
     draw() {
         d3.select(window).on("keydown", (event) => {
             switch (event.keyCode) {
-                case this.consts.BACKSPACE_KEY:
+                // case this.consts.BACKSPACE_KEY:
                 case this.consts.DELETE_KEY:
                     if (this.state.selectedNode) {
                         event.preventDefault();
@@ -85,6 +85,7 @@ class Graph {
             .on('click', () => {
                 this.state.selectedNode = null;
                 this.state.selectedEdge = null;
+                d3.select('#node-data')?.style('display', 'none')
                 this.update();
             })
             .call(zoom);
