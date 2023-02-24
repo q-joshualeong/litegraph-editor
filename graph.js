@@ -77,7 +77,7 @@ class Graph {
                 if (event.ctrlKey) {
                     const docId = prompt("Enter document id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {}}
+                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {"attr1": "1"}}
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -486,6 +486,7 @@ class Graph {
             const buttonRow = table.append('tr');
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
+                .attr('name', 'key')
                 .attr('placeholder', 'Enter key')
                 .on('input', function() {
                     const newKey = this.value;
@@ -494,6 +495,7 @@ class Graph {
                 });
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
+                .attr('name', 'value')
                 .attr('placeholder', 'Enter value')
                 .on('input', function() {
                     const newValue = this.value;
@@ -505,9 +507,10 @@ class Graph {
                 .attr('disabled', true)
                 .on('click', function() {
                     const newKey = buttonRow.select('input[type="text"]:first-child').property('value');
-                    const newValue = buttonRow.select('input[type="text"]:last-child').property('value');
+                    const newValue = buttonRow.select('input[type="text"][name="value"]:last-child').property('value');
                     if (newKey && newValue) {
                         node.attributes[newKey] = newValue;
+                        console.log(newKey, newValue)
                         buttonRow.select('input[type="text"]:first-child').property('value', '');
                         buttonRow.select('input[type="text"]:last-child').property('value', '');
                         refreshTable(); // refresh the table after adding a new attribute
