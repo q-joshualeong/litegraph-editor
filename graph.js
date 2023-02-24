@@ -69,7 +69,7 @@ class Graph {
                 if (event.shiftKey) {
                     const entityId = prompt("Enter entity id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, type: "entity", title: entityId, x: pos[0], y: pos[1], attributes: {}}
+                    const node = { id: ++this.nodeId, type: "entity", title: entityId, x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
                     this.nodes.push(node);
                     this.updateNodes("entity");
                 }
@@ -77,7 +77,7 @@ class Graph {
                 if (event.ctrlKey) {
                     const docId = prompt("Enter document id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {"attr1": "1"}}
+                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -458,6 +458,7 @@ class Graph {
             const headerRow = table.append('tr');
             headerRow.append('th').text('Attribute');
             headerRow.append('th').text('Value');
+            headerRow.append('th').text('Attribute Type')
             headerRow.append('th');
 
             // Add other data rows (all the attributes)
@@ -469,11 +470,18 @@ class Graph {
 
             attributeRows.each(function(d) {
                 const row = d3.select(this);
-                row.append('td').text(d[0]);
-                row.append('td').attr('contentEditable', true).text(d[1])
+                const attributeIndex = d[0]
+                const rowData = d[1]
+                row.append('td').text(rowData.key);
+                row.append('td').attr('contentEditable', true).text(rowData.value)
                     .on('input', function() {
                         const newValue = this.innerText;
-                        node.attributes[d[0]] = newValue;
+                        node.attributes[d[0]].value = newValue;
+                    });
+                row.append('td').attr('contentEditable', true).text(rowData.type)
+                    .on('input', function() {
+                        const newValue = this.innerText;
+                        node.attributes[d[0]].type = newValue;
                     });
                 row.append('td').append('button').text('x')
                     .on('click', () => {
@@ -483,6 +491,7 @@ class Graph {
             });
 
             // Add button row
+// Add button row
             const buttonRow = table.append('tr');
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
@@ -490,8 +499,10 @@ class Graph {
                 .attr('placeholder', 'Enter key')
                 .on('input', function() {
                     const newKey = this.value;
+                    const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
+                    const newType = buttonRow.select('select[name="type"]').property('value');
                     const addButton = buttonRow.select('button');
-                    addButton.property('disabled', !newKey || node.attributes[newKey] !== undefined);
+                    addButton.property('disabled', !newKey || !newValue || !newType);
                 });
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
@@ -500,22 +511,34 @@ class Graph {
                 .on('input', function() {
                     const newValue = this.value;
                     const addButton = buttonRow.select('button');
-                    const newKey = buttonRow.select('input[type="text"]:first-child').property('value');
-                    addButton.property('disabled', !newKey || node.attributes[newKey] !== undefined || !newValue);
+                    const newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
+                    const newType = buttonRow.select('select[name="type"]').property('value');
+                    addButton.property('disabled', !newKey || !newValue || !newType);
                 });
+            buttonRow.append('td').append('select')
+                .attr('name', 'type')
+                .selectAll('option')
+                .data(['string', 'boolean', 'long', 'short', 'float', 'int', 'double', 'date'])
+                .enter()
+                .append('option')
+                .text(function(d) { return d; });
             buttonRow.append('td').append('button').text('+')
                 .attr('disabled', true)
                 .on('click', function() {
-                    const newKey = buttonRow.select('input[type="text"]:first-child').property('value');
-                    const newValue = buttonRow.select('input[type="text"][name="value"]:last-child').property('value');
+                    const newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
+                    const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
+                    const newType = buttonRow.select('select[name="type"]').property('value');
                     if (newKey && newValue) {
-                        node.attributes[newKey] = newValue;
-                        console.log(newKey, newValue)
-                        buttonRow.select('input[type="text"]:first-child').property('value', '');
-                        buttonRow.select('input[type="text"]:last-child').property('value', '');
+                        console.log(newKey, newValue, newType)
+                        node.attributes.push({"key": newKey, "value": newValue, "type": newType})
+                        buttonRow.select('input[type="text"][name="key"]:first-child').property('value', '');
+                        buttonRow.select('input[type="text"][name="value"]:first-child').property('value', '');
+                        buttonRow.select('select[name="type"]').property('value', 'string');
                         refreshTable(); // refresh the table after adding a new attribute
                     }
                 });
+
+
 
             // Show the table in the node data element
             d3.select('#node-data')
