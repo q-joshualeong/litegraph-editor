@@ -219,6 +219,7 @@ class Graph {
                             } else {
                                 this.state.selectedNode = d;
                                 this.state.selectedEdge = null;
+                                this.showNodeData(d);
                                 this.update();
                             }
                         })
@@ -440,6 +441,89 @@ class Graph {
             });
         d3txt.node().focus();
     }
+
+    // Define the function to show node data
+    showNodeData(node) {
+        function refreshTable() {
+            // Remove the old table if it exists
+            d3.select('#node-data').selectAll('*').remove();
+
+            // Create the table with node data
+            const table = d3.select('#node-data')
+                .append('table')
+                .classed('node-data-table', true)
+                .append('tbody');
+
+            // Add header row
+            const headerRow = table.append('tr');
+            headerRow.append('th').text('Attribute');
+            headerRow.append('th').text('Value');
+            headerRow.append('th');
+
+            // Add other data rows (all the attributes)
+            const attributeRows = table.selectAll('tr.attribute')
+                .data(Object.entries(node.attributes))
+                .enter()
+                .append('tr')
+                .classed('attribute', true);
+
+            attributeRows.each(function(d) {
+                const row = d3.select(this);
+                row.append('td').text(d[0]);
+                row.append('td').attr('contentEditable', true).text(d[1])
+                    .on('input', function() {
+                        const newValue = this.innerText;
+                        node.attributes[d[0]] = newValue;
+                    });
+                row.append('td').append('button').text('x')
+                    .on('click', () => {
+                        delete node.attributes[d[0]];
+                        refreshTable(); // refresh the table after deleting an attribute
+                    });
+            });
+
+            // Add button row
+            const buttonRow = table.append('tr');
+            buttonRow.append('td').append('input')
+                .attr('type', 'text')
+                .attr('placeholder', 'Enter key')
+                .on('input', function() {
+                    const newKey = this.value;
+                    const addButton = buttonRow.select('button');
+                    addButton.property('disabled', !newKey || node.attributes[newKey] !== undefined);
+                });
+            buttonRow.append('td').append('input')
+                .attr('type', 'text')
+                .attr('placeholder', 'Enter value')
+                .on('input', function() {
+                    const newValue = this.value;
+                    const addButton = buttonRow.select('button');
+                    const newKey = buttonRow.select('input[type="text"]:first-child').property('value');
+                    addButton.property('disabled', !newKey || node.attributes[newKey] !== undefined || !newValue);
+                });
+            buttonRow.append('td').append('button').text('+')
+                .attr('disabled', true)
+                .on('click', function() {
+                    const newKey = buttonRow.select('input[type="text"]:first-child').property('value');
+                    const newValue = buttonRow.select('input[type="text"]:last-child').property('value');
+                    if (newKey && newValue) {
+                        node.attributes[newKey] = newValue;
+                        buttonRow.select('input[type="text"]:first-child').property('value', '');
+                        buttonRow.select('input[type="text"]:last-child').property('value', '');
+                        refreshTable(); // refresh the table after adding a new attribute
+                    }
+                });
+
+            // Show the table in the node data element
+            d3.select('#node-data')
+                .style('display', 'block');
+
+            // Scroll the node data element to the top
+            d3.select('#node-data').node().scrollTop = 0;
+        }
+        refreshTable();
+    }
+
 
     clear() {
         const doDelete = window.confirm("Do you really want to delete the whole graph?");
