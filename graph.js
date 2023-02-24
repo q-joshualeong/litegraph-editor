@@ -29,8 +29,8 @@ class Graph {
         // map source and target id to respective node
         this.edges = edges.map(e => {
             return {
-                source: this.nodes.find(n => n.id == e.source),
-                target: this.nodes.find(n => n.id == e.target),
+                source: this.nodes.find(n => n.id === e.source),
+                target: this.nodes.find(n => n.id === e.target),
                 label: e.label
             }
         });
@@ -69,7 +69,7 @@ class Graph {
                 if (event.shiftKey) {
                     const entityId = prompt("Enter entity id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, title: entityId, x: pos[0], y: pos[1], attributes: {}}
+                    const node = { id: ++this.nodeId, type: "entity", title: entityId, x: pos[0], y: pos[1], attributes: {}}
                     this.nodes.push(node);
                     this.updateNodes("entity");
                 }
@@ -77,7 +77,7 @@ class Graph {
                 if (event.ctrlKey) {
                     const docId = prompt("Enter document id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {}}
+                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {}}
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -190,7 +190,7 @@ class Graph {
 
     update() {
         this.updateEdges();
-        this.updateNodes("all");
+        this.updateNodes();
     }
 
     updateNodes(nodeType) {
@@ -337,6 +337,14 @@ class Graph {
 
     }
 
+    getPathStartAndEndPoints(d) {
+        const sourceX = d.source.type === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
+        const sourceY = d.source.type === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
+        const targetX = d.target.type === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
+        const targetY = d.target.type === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
+        return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
+    }
+
     updateEdges() {
         this.paths.selectAll(".edge")
             .data(this.edges, this.edgeId)
@@ -362,7 +370,7 @@ class Graph {
                         .attr("id", this.edgeId)
                         .classed("line", true)
                         .attr("d", d => {
-                            return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+                            return this.getPathStartAndEndPoints(d)
                         });
 
                     edges.append("text")
@@ -379,7 +387,7 @@ class Graph {
 
                     update.select("path")
                         .attr("d", d => {
-                            return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+                            return this.getPathStartAndEndPoints(d)
                         });
 
                     update.select("text").select("textPath").text(d => d.label);
