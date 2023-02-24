@@ -16,7 +16,9 @@ class Graph {
         this.consts = {
             BACKSPACE_KEY: 8,
             DELETE_KEY: 46,
-            NODE_RADIUS: 50,
+            NODE_RADIUS: 75,
+            RECT_WIDTH: 150,
+            RECT_HEIGHT: 150,
             CLICK_DISTANCE: 5,
             ENTER_KEY: 13,
         }
@@ -65,10 +67,19 @@ class Graph {
         this.svg
             .on("mousedown", (event, d) => {
                 if (event.shiftKey) {
+                    const entityId = prompt("Enter entity id: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, title: this.nodeId.toString(), x: pos[0], y: pos[1] }
+                    const node = { id: ++this.nodeId, title: entityId, x: pos[0], y: pos[1], attributes: {}}
                     this.nodes.push(node);
-                    this.updateNodes();
+                    this.updateNodes("entity");
+                }
+
+                if (event.ctrlKey) {
+                    const docId = prompt("Enter document id: ")
+                    const pos = d3.pointer(event, graph.plot.node())
+                    const node = { id: ++this.nodeId, title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes: {}}
+                    this.nodes.push(node);
+                    this.updateNodes("document");
                 }
             })
             .on('click', () => {
@@ -179,10 +190,10 @@ class Graph {
 
     update() {
         this.updateEdges();
-        this.updateNodes();
+        this.updateNodes("all");
     }
 
-    updateNodes() {
+    updateNodes(nodeType) {
         // enter node groups
         const nodes = this.circles.selectAll("g")
             .data(this.nodes, d => { return d.id; })
@@ -204,7 +215,7 @@ class Graph {
                         .on("click", (event, d) => {
                             event.stopPropagation();
                             if (event.shiftKey) {
-                                this.editNodeLabel(d);
+                                this.editNodeLabel(d, nodeType);
                             } else {
                                 this.state.selectedNode = d;
                                 this.state.selectedEdge = null;
@@ -213,11 +224,14 @@ class Graph {
                         })
                         .call(this.drag);
 
-                    nodes.append("circle")
-                        .attr("r", String(this.consts.NODE_RADIUS));
+                    if (nodeType==="entity") {
+                        this.makeEntity(nodes)
+                    }
 
-                    nodes.append("text")
-                        .text(d => { return d.title; });
+                    if (nodeType==="document") {
+                        this.makeDocument(nodes)
+                    }
+
                 },
                 update => {
                     update.attr("transform", d => { return "translate(" + d.x + "," + d.y + ")"; })
@@ -230,43 +244,97 @@ class Graph {
             );
     }
 
-    editNodeLabel(d) {
+    makeEntity(nodes) {
+        nodes.append("circle")
+            .attr("r", String(this.consts.NODE_RADIUS));
+        nodes.append("text")
+            .text(d => { return d.title; });
+    }
+
+    makeDocument(nodes) {
+        nodes.append("rect")
+            .attr("width", this.consts.RECT_WIDTH)
+            .attr("height", this.consts.RECT_HEIGHT);
+
+        nodes.append("text")
+            .attr("dx", this.consts.RECT_WIDTH/2)
+            .attr("dy", this.consts.RECT_HEIGHT/2)
+            .text(d => { return d.title; });
+    }
+
+    editNodeLabel(d, nodeType) {
         const selection = this.circles.selectAll('g').filter(function (dval) {
             return dval.id === d.id;
         });
         // hide current label
         const text = selection.selectAll("text").classed("hidden", true);
         // add intermediate editable paragraph
-        const d3txt = this.plot.selectAll("foreignObject")
-            .data([d])
-            .enter()
-            .append("foreignObject")
-            .attr("x", d.x - this.consts.NODE_RADIUS)
-            .attr("y", d.y - this.consts.NODE_RADIUS/2)
-            .attr("height", 2 * this.consts.NODE_RADIUS)
-            .attr("width", 2 * this.consts.NODE_RADIUS)
-            .append("xhtml:div")
-            .attr("id", "editable-p")
-            .attr("contentEditable", "true")
-            .style("text-align", "center")
-            //.style("border", "1px solid")
-            .text(d.title)
-            .on("mousedown", (event, d) => {
-                event.stopPropagation();
-            })
-            .on("keydown", (event, d) => {
-                event.stopPropagation();
-                if (event.keyCode == this.consts.ENTER_KEY) {
-                    event.target.blur();
-                }
-            })
-            .on("blur", (event, d) => {
-                d.title = event.target.textContent;
-                d3.select(event.target.parentElement).remove();
-                this.updateNodes();
-                text.classed("hidden", false);
-            });
-        d3txt.node().focus();
+        if (nodeType==="entity") {
+            const d3txt = this.plot.selectAll("foreignObject")
+                .data([d])
+                .enter()
+                .append("foreignObject")
+                .attr("x", d.x - this.consts.NODE_RADIUS)
+                .attr("y", d.y - this.consts.NODE_RADIUS/2)
+                .attr("height", 2 * this.consts.NODE_RADIUS)
+                .attr("width", 2 * this.consts.NODE_RADIUS)
+                .append("xhtml:div")
+                .attr("id", "editable-p")
+                .attr("contentEditable", "true")
+                .style("text-align", "center")
+                //.style("border", "1px solid")
+                .text(d.title)
+                .on("mousedown", (event, d) => {
+                    event.stopPropagation();
+                })
+                .on("keydown", (event, d) => {
+                    event.stopPropagation();
+                    if (event.keyCode == this.consts.ENTER_KEY) {
+                        event.target.blur();
+                    }
+                })
+                .on("blur", (event, d) => {
+                    d.title = event.target.textContent;
+                    d3.select(event.target.parentElement).remove();
+                    this.updateNodes();
+                    text.classed("hidden", false);
+                });
+            d3txt.node().focus();
+        }
+
+        if (nodeType==="document") {
+            const d3txt = this.plot.selectAll("foreignObject")
+                .data([d])
+                .enter()
+                .append("foreignObject")
+                .attr("x", d.x - this.consts.RECT_WIDTH/2)
+                .attr("y", d.y + this.consts.RECT_HEIGHT/4)
+                .attr("height", 2 * this.consts.RECT_HEIGHT)
+                .attr("width", 2 * this.consts.RECT_WIDTH)
+                .append("xhtml:div")
+                .attr("id", "editable-p")
+                .attr("contentEditable", "true")
+                .style("text-align", "center")
+                //.style("border", "1px solid")
+                .text(d.title)
+                .on("mousedown", (event, d) => {
+                    event.stopPropagation();
+                })
+                .on("keydown", (event, d) => {
+                    event.stopPropagation();
+                    if (event.keyCode == this.consts.ENTER_KEY) {
+                        event.target.blur();
+                    }
+                })
+                .on("blur", (event, d) => {
+                    d.title = event.target.textContent;
+                    d3.select(event.target.parentElement).remove();
+                    this.updateNodes();
+                    text.classed("hidden", false);
+                });
+            d3txt.node().focus();
+        }
+
     }
 
     updateEdges() {
@@ -395,13 +463,8 @@ class Graph {
 
 const graph = new Graph({
     svg: d3.select("#graph"),
-    nodes: [{ id: 1, title: "A", x: 250, y: 150 },
-    { id: 2, title: "B", x: 800, y: 500 },
-    { id: 3, title: "C", x: 200, y: 700 }],
-    edges: [
-        { source: 1, target: 2, label: "Hello" },
-        { source: 2, target: 3, label: "World!" }
-    ]
+    nodes: [],
+    edges: []
 })
 
 d3.select("#delete-graph").on("click", () => {

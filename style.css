@@ -1,0 +1,212 @@
+:root {
+    --text-width: 38.6rem;
+    --smaller-text: 0.9rem;
+    --text-color: black;
+    --background-color: #f8f8f8;
+    --details-background-color: #E8E8E8;
+    --highlight-color: firebrick;
+    font-size: 105%;
+    font-family: "Helvetica", "Arial", sans-serif;
+    line-height: 1.5;
+    overflow: auto;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: rgb(190, 186, 181);
+        --background-color: #161718;
+        --details-background-color: #242426;
+        --highlight-color: rgb(213, 67, 67);
+    }
+
+    a {
+        color: rgb(83, 154, 212);
+    }
+}
+
+body {
+    margin: auto;
+    max-width: var(--text-width);
+    padding: 0.7em 0.7em;
+}
+
+/* Header */
+
+header time {
+    font-size: 0.9rem;
+}
+
+header h1 {
+    margin-bottom: 0;
+}
+
+/* List of articles */
+
+ul.articles {
+    list-style-type: square;
+    line-height: 1.1;
+    padding: 0;
+}
+
+ul.articles > li {
+    margin-bottom: 0.3em;
+}
+
+ul.articles>li>a {
+    text-decoration: none;
+}
+
+/* Headers */
+
+h1 {
+    font-size: 1.5em;
+}
+
+h2 {
+    font-size: 1.2em;
+}
+
+h3 {
+    font-size: 1em;
+}
+
+/* Links */
+
+a {
+    text-decoration: underline;
+}
+
+a:hover {
+    opacity: 0.7;
+}
+
+a[href ^="/"], a[href ^="mailto"], a[href ^= "#"] {
+    color: var(--text-color);
+}
+
+/* Code */
+
+code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.94em;
+}
+
+/* Blocks between text */
+
+blockquote {
+    border-left: 0.3em solid #CCC;
+    font-size: var(--smaller-text);
+}
+
+ol, ul, blockquote {
+    margin-left: 1em;
+    margin-right: 1em;
+    padding-left: 1em;
+}
+
+figure {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+figcaption {
+    font-size: var(--smaller-text);
+    text-align: center;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    margin: auto;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table,
+th,
+td {
+    border: 1px solid;
+}
+
+th,
+td {
+    padding: 0.1rem 0.3rem;
+}
+
+pre {
+    background-color: var(--details-background-color);
+    padding: 1rem;
+    overflow-x: scroll;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+summary {
+    cursor: pointer;
+    background-color: var(--background-color);
+}
+
+details {
+    background-color: var(--details-background-color);
+}
+
+/* SVG: some useful defaults */
+
+svg.verzettelung circle, rect, ellipse, line, path {
+    stroke: var(--text-color);
+}
+
+svg.verzettelung path {
+    fill: none;
+}
+
+svg.verzettelung text {
+    fill: var(--text-color);
+}
+
+.katex {
+    font-size: 1.13em;
+}
+
+.katex-display {
+    overflow: auto hidden;
+    /* Hack to prevent clipping */
+    padding: 1px 0;
+    margin: calc(1em - 1px) 0;
+}
+
+/* Footnotes */
+
+.footnotes {
+    font-size: 0.9em;
+}
+
+.footnotes>p {
+    margin: 0.2em;
+}
+
+/* References */
+
+.references {
+    list-style: none;
+    margin: 0;
+    padding-left: 1em;
+}
+
+.references>li {
+    text-indent: -1em;
+}
+
+/* Navigation */
+
+footer {
+    margin-top: 1.5em;
+    margin-bottom: 1em;
+    text-align: center;
+}

@@ -2,8 +2,6 @@
 
 Reimplementation of [directed-graph-creator](https://github.com/cjrd/directed-graph-creator) with [D3](https://d3js.org/) v6 and a few improvements.
 
-Demo: https://verzettelung.com/20/11/21/
-
 ## Usage
 
 * Scroll to zoom in or out
@@ -21,10 +19,6 @@ Demo: https://verzettelung.com/20/11/21/
 * All positions relative to SVG container: elements outside SVG do not affect graph layout
 * ES6 syntax and D3 v6
 
-## TODO
-
-* Multiline node labels
-* Position editable edge labels
 
 ## License 
 

@@ -19,6 +19,12 @@ g.node > circle {
     stroke-width: 2px;
 }
 
+g.node > rect {
+    stroke: var(--text-color);
+    fill: var(--background-color);
+    stroke-width: 2px;
+}
+
 g.node > text {
     text-anchor: middle;
     dominant-baseline: middle;
@@ -29,6 +35,10 @@ g.node:hover {
 }
 
 g.node.selected>circle {
+    fill: orange;
+}
+
+g.node.selected>rect {
     fill: orange;
 }
 
@@ -44,6 +54,10 @@ g.node:hover > circle {
     fill: orange;
 }
 
+g.node:hover > rect {
+    fill: orange;
+}
+
 g.node:hover > text {
     fill: black;
 }
@@ -51,6 +65,7 @@ g.node:hover > text {
 text.hidden {
     display: none;
 }
+
 
 /* Edges */
 
