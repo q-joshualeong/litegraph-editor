@@ -28,9 +28,11 @@ class Graph {
     setEdges(edges) {
         // map source and target id to respective node
         this.edges = edges.map(e => {
+            const sourceNode = this.nodes.find(n => n.id === e.source);
+            const targetNode = this.nodes.find(n => n.id === e.target);
             return {
-                source: this.nodes.find(n => n.id === e.source),
-                target: this.nodes.find(n => n.id === e.target),
+                source: sourceNode,
+                target: targetNode,
                 attributes: [],
                 label: e.label
             }
@@ -69,17 +71,19 @@ class Graph {
         this.svg
             .on("mousedown", (event, d) => {
                 if (event.shiftKey) {
-                    const entityId = prompt("Enter entity id: ")
+                    const entityId = prompt("Enter entity type: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, type: "entity", title: entityId, x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityId, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
                 }
 
                 if (event.ctrlKey) {
-                    const docId = prompt("Enter document id: ")
+                    const docType = prompt("Enter document type: ")
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, type: "document", title: docId, x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
+                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, title: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
+                    node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -126,7 +130,7 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { source: source, target: target , attributes: []};
+                    var newEdge = { source: source, target: target, attributes: []};
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -473,16 +477,6 @@ class Graph {
                     nodeOrEdge.type = this.value;
                 });
 
-            // Add a row for the node title
-            const titleRow = table.append("tr");
-            titleRow.append("td").text("Title:");
-            titleRow.append("td").append("input")
-                .attr("type", "text")
-                .attr("value", nodeOrEdge.title)
-                .on("input", function() {
-                    nodeOrEdge.title = this.value;
-                });
-
             // Show the table in the node data element
             d3.select('#node-data')
                 .style('display', 'block');
@@ -617,11 +611,24 @@ class Graph {
         this.update();
     }
 
-    serialize() {
+    toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
-            return { source: edge.source.id, target: edge.target.id, attributes: edge.attributes };
+            const source = edge.source;
+            const target = edge.target;
+            const document = source.nodeType === "document" ? source : target;
+            const entity = source.nodeType === "entity" ? source : target;
+            return { edgeId: edge.id, documentId: document.id, documentType: document.type, entityId: entity.id, entityType: entity.type, attributes: edge.attributes };
         });
-        return new window.Blob([window.JSON.stringify({ "nodes": this.nodes, "edges": saveEdges })], { type: "text/plain;charset=utf-8" });
+        const documentsAndEntities = this.nodes.reduce((acc, node) => {
+            if (node.nodeType === "document") {
+                acc.documents.push(node);
+            } else if (node.nodeType === "entity") {
+                acc.entities.push(node);
+            }
+            return acc;
+        }, { documents: [], entities: [] });
+
+        return new window.Blob([window.JSON.stringify({ "documents": documentsAndEntities.documents, "entities": documentsAndEntities.entities, "edges": saveEdges })], { type: "text/plain;charset=utf-8" });
     }
 }
 
@@ -638,7 +645,7 @@ d3.select("#delete-graph").on("click", () => {
 });
 
 d3.select("#download-input").on("click", () => {
-    saveAs(graph.serialize(), "dag-download.json");
+    saveAs(graph.toLiteGraph(), "dag-download.json");
 });
 
 

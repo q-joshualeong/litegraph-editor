@@ -6,24 +6,18 @@ Reimplementation of [directed-graph-creator](https://github.com/cjrd/directed-gr
 
 * Scroll to zoom in or out
 * Drag whitespace to move graph  
-* Shift-click on whitespace to create a node
+* Shift-click on whitespace to create an entity
+* Ctrl-click on whitespace to create a document 
 * Shift-click on a node and drag to another node to connect them with a directed edge
-* Shift-click on node or edge to change its title
-* Click on node or edge and press backspace/delete to delete
-
-## Improvements over original
-
-* Optional edge labels
-* Edge coloring includes arrow heads
-* Upload fixed: current ID variable is initialized correctly from uploaded data, preventing bugs caused by duplicate IDs
-* All positions relative to SVG container: elements outside SVG do not affect graph layout
-* ES6 syntax and D3 v6
+* Click on node or edge and press delete to delete
+* Click on node or edge to edit its attributes
 
 
 ## Issues / todo
-* Need to prohibit doc to doc and ent to ent links
-* edge attributes 
-* some bug when creating entities causing it to be "sticky"
+- [ ] Need to prohibit doc to doc and ent to ent links 
+- [ ] Make output follow litegraph/scoring graph structure
+- [X] edge attributes 
+- [ ] some bug when creating entities causing it to be "sticky"
 
 ## License 
 
