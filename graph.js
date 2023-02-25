@@ -87,6 +87,7 @@ class Graph {
             .on('click', () => {
                 this.state.selectedNode = null;
                 this.state.selectedEdge = null;
+                d3.select('#node-attribute-data')?.style('display', 'none')
                 d3.select('#node-data')?.style('display', 'none')
                 this.update();
             })
@@ -223,6 +224,7 @@ class Graph {
                                 this.state.selectedNode = d;
                                 this.state.selectedEdge = null;
                                 this.showAttributeData(d);
+                                this.showNodeData(d);
                                 this.update();
                             }
                         })
@@ -446,16 +448,59 @@ class Graph {
         d3txt.node().focus();
     }
 
-    // Define the function to show node data
-    showAttributeData(nodeOrEdge) {
+    showNodeData(nodeOrEdge) {
         function refreshTable() {
             // Remove the old table if it exists
             d3.select('#node-data').selectAll('*').remove();
 
+            const table = d3.select("#node-data")
+                .append("table")
+                .classed("node-data-table", true)
+                .append('tbody');
+
+            // Add a row for the node id
+            const idRow = table.append("tr")
+            idRow.append("td").text("ID:")
+            idRow.append("td").text(nodeOrEdge.id);
+
+            // Add a row for the node type
+            const typeRow = table.append("tr");
+            typeRow.append("td").text("Type:");
+            typeRow.append("td").append("input")
+                .attr("type", "text")
+                .attr("value", nodeOrEdge.type)
+                .on("input", function() {
+                    nodeOrEdge.type = this.value;
+                });
+
+            // Add a row for the node title
+            const titleRow = table.append("tr");
+            titleRow.append("td").text("Title:");
+            titleRow.append("td").append("input")
+                .attr("type", "text")
+                .attr("value", nodeOrEdge.title)
+                .on("input", function() {
+                    nodeOrEdge.title = this.value;
+                });
+
+            // Show the table in the node data element
+            d3.select('#node-data')
+                .style('display', 'block');
+
+        }
+        refreshTable();
+    }
+
+    // Define the function to show node data
+    showAttributeData(nodeOrEdge) {
+        function refreshTable() {
+            // Remove the old table if it exists
+            d3.select('#node-attribute-data').selectAll('*').remove();
+
             // Create the table with node data
-            const table = d3.select('#node-data')
+            const table = d3.select('#node-attribute-data')
                 .append('table')
-                .classed('node-data-table', true)
+                .classed('node-attribute-data-table', true)
                 .append('tbody');
 
             // Add header row
@@ -544,11 +589,11 @@ class Graph {
 
 
             // Show the table in the node data element
-            d3.select('#node-data')
+            d3.select('#node-attribute-data')
                 .style('display', 'block');
 
             // Scroll the node data element to the top
-            d3.select('#node-data').node().scrollTop = 0;
+            d3.select('#node-attribute-data').node().scrollTop = 0;
         }
         refreshTable();
     }
