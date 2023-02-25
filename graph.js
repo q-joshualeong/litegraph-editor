@@ -31,10 +31,12 @@ class Graph {
             return {
                 source: this.nodes.find(n => n.id === e.source),
                 target: this.nodes.find(n => n.id === e.target),
+                attributes: [],
                 label: e.label
             }
         });
     }
+
 
     draw() {
         d3.select(window).on("keydown", (event) => {
@@ -123,7 +125,7 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { source: source, target: target };
+                    var newEdge = { source: source, target: target , attributes: []};
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -220,7 +222,7 @@ class Graph {
                             } else {
                                 this.state.selectedNode = d;
                                 this.state.selectedEdge = null;
-                                this.showNodeData(d);
+                                this.showAttributeData(d);
                                 this.update();
                             }
                         })
@@ -360,6 +362,7 @@ class Graph {
                                 this.editEdgeLabel(d);
                             } else {
                                 this.state.selectedEdge = d;
+                                this.showAttributeData(d);
                                 this.state.selectedNode = null;
                                 this.update();
                             }
@@ -444,7 +447,7 @@ class Graph {
     }
 
     // Define the function to show node data
-    showNodeData(node) {
+    showAttributeData(nodeOrEdge) {
         function refreshTable() {
             // Remove the old table if it exists
             d3.select('#node-data').selectAll('*').remove();
@@ -463,8 +466,9 @@ class Graph {
             headerRow.append('th');
 
             // Add other data rows (all the attributes)
+            console.log(nodeOrEdge)
             const attributeRows = table.selectAll('tr.attribute')
-                .data(Object.entries(node.attributes))
+                .data(Object.entries(nodeOrEdge.attributes))
                 .enter()
                 .append('tr')
                 .classed('attribute', true);
@@ -476,17 +480,15 @@ class Graph {
                 row.append('td').text(rowData.key);
                 row.append('td').attr('contentEditable', true).text(rowData.value)
                     .on('input', function() {
-                        const newValue = this.innerText;
-                        node.attributes[d[0]].value = newValue;
+                        nodeOrEdge.attributes[d[0]].value = this.innerText;
                     });
                 row.append('td').attr('contentEditable', true).text(rowData.type)
                     .on('input', function() {
-                        const newValue = this.innerText;
-                        node.attributes[d[0]].type = newValue;
+                        nodeOrEdge.attributes[d[0]].type = this.innerText;
                     });
                 row.append('td').append('button').text('x')
                     .on('click', () => {
-                        delete node.attributes[d[0]];
+                        delete nodeOrEdge.attributes[d[0]];
                         refreshTable(); // refresh the table after deleting an attribute
                     });
             });
@@ -531,7 +533,7 @@ class Graph {
                     const newType = buttonRow.select('select[name="type"]').property('value');
                     if (newKey && newValue) {
                         console.log(newKey, newValue, newType)
-                        node.attributes.push({"key": newKey, "value": newValue, "type": newType})
+                        nodeOrEdge.attributes.push({"key": newKey, "value": newValue, "type": newType})
                         buttonRow.select('input[type="text"][name="key"]:first-child').property('value', '');
                         buttonRow.select('input[type="text"][name="value"]:first-child').property('value', '');
                         buttonRow.select('select[name="type"]').property('value', 'string');
@@ -572,7 +574,7 @@ class Graph {
 
     serialize() {
         const saveEdges = this.edges.map(edge => {
-            return { source: edge.source.id, target: edge.target.id };
+            return { source: edge.source.id, target: edge.target.id, attributes: edge.attributes };
         });
         return new window.Blob([window.JSON.stringify({ "nodes": this.nodes, "edges": saveEdges })], { type: "text/plain;charset=utf-8" });
     }
