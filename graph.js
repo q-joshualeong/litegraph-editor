@@ -129,6 +129,8 @@ class Graph {
 
                 if (!source || !target) return;
 
+                if (source.nodeType === target.nodeType) return;
+
                 // source and target are different
                 if (source !== target) {
                     // remove edge between source and target (any order)
