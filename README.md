@@ -1,6 +1,6 @@
 # Graph Editor
 
-Reimplementation of [directed-graph-creator](https://github.com/cjrd/directed-graph-creator) with [D3](https://d3js.org/) v6 and a few improvements.
+Adaptation of [graph-editor](https://github.com/kldtz/graph-editor) with more features
 
 ## Usage
 
@@ -14,10 +14,15 @@ Reimplementation of [directed-graph-creator](https://github.com/cjrd/directed-gr
 
 
 ## Issues / todo
-- [ ] Need to prohibit doc to doc and ent to ent links 
+- [X] Need to prohibit doc to doc and ent to ent links 
 - [ ] Make output follow litegraph/scoring graph structure
 - [X] edge attributes 
 - [ ] some bug when creating entities causing it to be "sticky"
+- [ ] Add demo to github pages for easy access?
+- [ ] Refactor objects into classes?
+- [ ] Prettify output
+- [ ] Ability to load a litegraph json
+- [ ] Dont remove the graph on refresh. Only if explcitly click on delete button.
 
 ## License 
 
