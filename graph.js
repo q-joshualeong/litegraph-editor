@@ -617,18 +617,41 @@ class Graph {
             const target = edge.target;
             const document = source.nodeType === "document" ? source : target;
             const entity = source.nodeType === "entity" ? source : target;
-            return { edgeId: edge.id, documentId: document.id, documentType: document.type, entityId: entity.id, entityType: entity.type, attributes: edge.attributes };
+            return {
+                edgeId: edge.id,
+                documentId: document.id,
+                documentType: document.type,
+                entityId: entity.id,
+                entityType: entity.type,
+                attributes: edge.attributes
+            };
         });
         const documentsAndEntities = this.nodes.reduce((acc, node) => {
             if (node.nodeType === "document") {
-                acc.documents.push(node);
+                const doc = {
+                    documentId: node.id,
+                    documentType: node.type,
+                    attributes: node.attributes
+                };
+                acc.documents.push(doc);
             } else if (node.nodeType === "entity") {
-                acc.entities.push(node);
+                const ent = {
+                    entityId: node.id,
+                    entityType: node.type,
+                    attributes: node.attributes
+                };
+                acc.entities.push(ent);
             }
             return acc;
         }, { documents: [], entities: [] });
 
-        return new window.Blob([window.JSON.stringify({ "documents": documentsAndEntities.documents, "entities": documentsAndEntities.entities, "edges": saveEdges })], { type: "text/plain;charset=utf-8" });
+        return new window.Blob([window.JSON.stringify(
+            {
+                "documents": documentsAndEntities.documents,
+                "entities": documentsAndEntities.entities,
+                "edges": saveEdges
+            }
+            )], { type: "text/plain;charset=utf-8" });
     }
 }
 
