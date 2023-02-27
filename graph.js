@@ -356,10 +356,10 @@ class Graph {
     }
 
     getPathStartAndEndPoints(d) {
-        const sourceX = d.source.type === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
-        const sourceY = d.source.type === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
-        const targetX = d.target.type === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
-        const targetY = d.target.type === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
+        const sourceX = d.source.nodeType === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
+        const sourceY = d.source.nodeType === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
+        const targetX = d.target.nodeType === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
+        const targetY = d.target.nodeType === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
