@@ -1,4 +1,4 @@
-# Graph Editor
+# Litegraph Editor
 
 Adaptation of [graph-editor](https://github.com/kldtz/graph-editor) with more features
 
