@@ -619,6 +619,21 @@ class Graph {
         this.update();
     }
 
+    formatAttributes(attributes) {
+        const suffix = "Attributes";
+        let attrMap = new Map();
+        attributes.forEach(attr => {
+            const attrType = attr.type + suffix;
+            let attrObj = {};
+            if (attrMap.has(attrType)) {
+                attrObj = attrMap.get(attrType);
+            }
+            attrObj[attr.key] = attr.value;
+            attrMap.set(attrType, attrObj);
+        });
+        return Object.fromEntries(attrMap);
+    }
+
     toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
             const source = edge.source;
@@ -631,7 +646,7 @@ class Graph {
                 documentType: document.type,
                 entityId: entity.id,
                 entityType: entity.type,
-                attributes: edge.attributes
+                attributes: this.formatAttributes(edge.attributes)
             };
         });
         const documentsAndEntities = this.nodes.reduce((acc, node) => {
@@ -639,14 +654,14 @@ class Graph {
                 const doc = {
                     documentId: node.id,
                     documentType: node.type,
-                    attributes: node.attributes
+                    attributes: this.formatAttributes(node.attributes)
                 };
                 acc.documents.push(doc);
             } else if (node.nodeType === "entity") {
                 const ent = {
                     entityId: node.id,
                     entityType: node.type,
-                    attributes: node.attributes
+                    attributes: this.formatAttributes(node.attributes)
                 };
                 acc.entities.push(ent);
             }
