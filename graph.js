@@ -632,8 +632,11 @@ class Graph {
             const target = edge.target;
             const document = source.nodeType === "document" ? source : target;
             const entity = source.nodeType === "entity" ? source : target;
+            const eid = this.edgeId(edge);
             return {
-                edgeId: edge.id,
+                edgeId: eid,
+                edgeType: document.type + '-' + entity.type,
+                label: document.type + '-' + entity.type + eid,
                 documentId: document.id,
                 documentType: document.type,
                 entityId: entity.id,
@@ -646,6 +649,7 @@ class Graph {
                 const doc = {
                     documentId: node.id,
                     documentType: node.type,
+                    label: node.type + node.id,
                     attributes: this.formatAttributes(node.attributes)
                 };
                 acc.documents.push(doc);
@@ -653,7 +657,9 @@ class Graph {
                 const ent = {
                     entityId: node.id,
                     entityType: node.type,
-                    attributes: this.formatAttributes(node.attributes)
+                    label: node.type + node.id,
+                    attributes: this.formatAttributes(node.attributes),
+                    records: []
                 };
                 acc.entities.push(ent);
             }
