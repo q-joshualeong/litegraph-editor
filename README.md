@@ -18,7 +18,7 @@ Adaptation of [graph-editor](https://github.com/kldtz/graph-editor) with more fe
 - [ ] Make output follow litegraph/scoring graph structure
 - [X] edge attributes 
 - [ ] some bug when creating entities causing it to be "sticky"
-- [ ] Add demo to github pages for easy access?
+- [X] Add demo to github pages for easy access?
 - [ ] Refactor objects into classes?
 - [ ] Prettify output
 - [ ] Ability to load a litegraph json
