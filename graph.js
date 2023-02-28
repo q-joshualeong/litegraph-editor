@@ -71,9 +71,12 @@ class Graph {
         this.svg
             .on("mousedown", (event, d) => {
                 if (event.shiftKey) {
-                    const entityId = prompt("Enter entity type: ")
+                    const entityType = prompt("Enter entity type: ")
+                    if (entityType === null || entityType === "") {
+                        return;
+                    }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityId, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
                     node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
@@ -81,6 +84,9 @@ class Graph {
 
                 if (event.ctrlKey) {
                     const docType = prompt("Enter document type: ")
+                    if (docType === null || docType === "") {
+                        return;
+                    }
                     const pos = d3.pointer(event, graph.plot.node())
                     const node = { id: ++this.nodeId, nodeType: "document", type: docType, title: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
                     node.title = node.type + "-" + node.id
@@ -122,6 +128,8 @@ class Graph {
                 const target = this.state.mouseOverNode;
 
                 if (!source || !target) return;
+
+                if (source.nodeType === target.nodeType) return;
 
                 // source and target are different
                 if (source !== target) {
@@ -348,10 +356,10 @@ class Graph {
     }
 
     getPathStartAndEndPoints(d) {
-        const sourceX = d.source.type === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
-        const sourceY = d.source.type === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
-        const targetX = d.target.type === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
-        const targetY = d.target.type === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
+        const sourceX = d.source.nodeType === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
+        const sourceY = d.source.nodeType === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
+        const targetX = d.target.nodeType === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
+        const targetY = d.target.nodeType === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
