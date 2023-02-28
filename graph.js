@@ -506,7 +506,7 @@ class Graph {
                 case 'float':
                     return /^[-+]?[0-9]*(\.[0-9]+)$/.test(val);
                 case 'boolean':
-                    return (val == 'true') || (val == 'false');
+                    return (val === 'true') || (val === 'false');
             }
             return true;
         }
@@ -641,6 +641,23 @@ class Graph {
     }
 
     formatAttributes(attributes) {
+        function convertStrToType(val, type) {
+            switch (type) {
+                case 'long':
+                case 'short':
+                case 'int':
+                case 'double':
+                    const numericVal = parseInt(val);
+                    return isNaN(numericVal) ? val : numericVal;
+                case 'float':
+                    const floatVal = parseFloat(val);
+                    return isNaN(floatVal) ? val : floatVal;
+                case 'boolean':
+                    return (val === 'true') || (val === 'false');
+            }
+            return val;
+        }
+
         const suffix = "Attributes";
         let attrMap = new Map();
         attributes.forEach(attr => {
@@ -649,7 +666,7 @@ class Graph {
             if (attrMap.has(attrType)) {
                 attrObj = attrMap.get(attrType);
             }
-            attrObj[attr.key] = attr.value;
+            attrObj[attr.key] = convertStrToType(attr.value, attr.type);
             attrMap.set(attrType, attrObj);
         });
         return Object.fromEntries(attrMap);
