@@ -495,6 +495,22 @@ class Graph {
 
     // Define the function to show node data
     showAttributeData(nodeOrEdge) {
+        function inputIsValid(key, val, type) {
+            if (!key || !val || !type) return false;
+            switch (type) {
+                case 'long':
+                case 'short':
+                case 'int':
+                case 'double':
+                    return /^([0-9]*)$/.test(val);
+                case 'float':
+                    return /^[-+]?[0-9]*(\.[0-9]+)$/.test(val);
+                case 'boolean':
+                    return (val == 'true') || (val == 'false');
+            }
+            return true;
+        }
+
         function refreshTable() {
             // Remove the old table if it exists
             d3.select('#node-attribute-data').selectAll('*').remove();
@@ -541,30 +557,34 @@ class Graph {
             });
 
             // Add button row
-// Add button row
             const buttonRow = table.append('tr');
+            let newKey = '';
+            let newValue = '';
+            let newType = '';
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
                 .attr('name', 'key')
                 .attr('placeholder', 'Enter key')
                 .on('input', function() {
-                    const newKey = this.value;
-                    const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
-                    const newType = buttonRow.select('select[name="type"]').property('value');
+                    newKey = this.value;
+                    newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
+                    newType = buttonRow.select('select[name="type"]').property('value');
                     const addButton = buttonRow.select('button');
-                    addButton.property('disabled', !newKey || !newValue || !newType);
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
                 });
+
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
                 .attr('name', 'value')
                 .attr('placeholder', 'Enter value')
                 .on('input', function() {
-                    const newValue = this.value;
+                    newValue = this.value;
                     const addButton = buttonRow.select('button');
-                    const newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
-                    const newType = buttonRow.select('select[name="type"]').property('value');
-                    addButton.property('disabled', !newKey || !newValue || !newType);
+                    newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
+                    newType = buttonRow.select('select[name="type"]').property('value');
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
                 });
+
             buttonRow.append('td').append('select')
                 .attr('name', 'type')
                 .selectAll('option')
@@ -572,6 +592,7 @@ class Graph {
                 .enter()
                 .append('option')
                 .text(function(d) { return d; });
+
             buttonRow.append('td').append('button').text('+')
                 .attr('disabled', true)
                 .on('click', function() {
