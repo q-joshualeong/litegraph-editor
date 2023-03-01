@@ -501,8 +501,8 @@ class Graph {
                 case 'long':
                 case 'short':
                 case 'int':
-                case 'double':
                     return /^([0-9]*)$/.test(val);
+                case 'double':
                 case 'float':
                     return /^[-+]?[0-9]*(\.[0-9]+)$/.test(val);
                 case 'boolean':
@@ -580,8 +580,6 @@ class Graph {
                 .on('input', function() {
                     newValue = this.value;
                     const addButton = buttonRow.select('button');
-                    newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
-                    newType = buttonRow.select('select[name="type"]').property('value');
                     addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
                 });
 
@@ -592,6 +590,13 @@ class Graph {
                 .enter()
                 .append('option')
                 .text(function(d) { return d; });
+
+            buttonRow.select('select[name="type"]')
+                .on('click', function() {
+                    const addButton = buttonRow.select('button');
+                    newType = this.value;
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
+                });
 
             buttonRow.append('td').append('button').text('+')
                 .attr('disabled', true)
@@ -646,14 +651,14 @@ class Graph {
                 case 'long':
                 case 'short':
                 case 'int':
-                case 'double':
                     const numericVal = parseInt(val);
                     return isNaN(numericVal) ? val : numericVal;
+                case 'double':
                 case 'float':
                     const floatVal = parseFloat(val);
                     return isNaN(floatVal) ? val : floatVal;
                 case 'boolean':
-                    return (val === 'true') || (val === 'false');
+                    return val === 'true' ? true : val === 'false' ? false : val;
             }
             return val;
         }
