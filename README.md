@@ -11,6 +11,7 @@ Adaptation of [graph-editor](https://github.com/kldtz/graph-editor) with more fe
 * Shift-click on a node and drag to another node to connect them with a directed edge
 * Click on node or edge and press delete to delete
 * Click on node or edge to edit its attributes
+* Download button to get graph as a LiteGraph json output
 
 ## License 
 
