@@ -495,6 +495,22 @@ class Graph {
 
     // Define the function to show node data
     showAttributeData(nodeOrEdge) {
+        function inputIsValid(key, val, type) {
+            if (!key || !val || !type) return false;
+            switch (type) {
+                case 'long':
+                case 'short':
+                case 'int':
+                    return /^([-+]?[0-9]*)$/.test(val);
+                case 'double':
+                case 'float':
+                    return /^[-+]?[0-9]*(\.[0-9]+)$/.test(val);
+                case 'boolean':
+                    return (val === 'true') || (val === 'false');
+            }
+            return true;
+        }
+
         function refreshTable() {
             // Remove the old table if it exists
             d3.select('#node-attribute-data').selectAll('*').remove();
@@ -541,30 +557,32 @@ class Graph {
             });
 
             // Add button row
-// Add button row
             const buttonRow = table.append('tr');
+            let newKey = '';
+            let newValue = '';
+            let newType = '';
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
                 .attr('name', 'key')
                 .attr('placeholder', 'Enter key')
                 .on('input', function() {
-                    const newKey = this.value;
-                    const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
-                    const newType = buttonRow.select('select[name="type"]').property('value');
+                    newKey = this.value;
+                    newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
+                    newType = buttonRow.select('select[name="type"]').property('value');
                     const addButton = buttonRow.select('button');
-                    addButton.property('disabled', !newKey || !newValue || !newType);
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
                 });
+
             buttonRow.append('td').append('input')
                 .attr('type', 'text')
                 .attr('name', 'value')
                 .attr('placeholder', 'Enter value')
                 .on('input', function() {
-                    const newValue = this.value;
+                    newValue = this.value;
                     const addButton = buttonRow.select('button');
-                    const newKey = buttonRow.select('input[type="text"][name="key"]:first-child').property('value');
-                    const newType = buttonRow.select('select[name="type"]').property('value');
-                    addButton.property('disabled', !newKey || !newValue || !newType);
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
                 });
+
             buttonRow.append('td').append('select')
                 .attr('name', 'type')
                 .selectAll('option')
@@ -572,6 +590,14 @@ class Graph {
                 .enter()
                 .append('option')
                 .text(function(d) { return d; });
+
+            buttonRow.select('select[name="type"]')
+                .on('click', function() {
+                    const addButton = buttonRow.select('button');
+                    newType = this.value;
+                    addButton.property('disabled', !inputIsValid(newKey, newValue, newType));
+                });
+
             buttonRow.append('td').append('button').text('+')
                 .attr('disabled', true)
                 .on('click', function() {
@@ -619,24 +645,85 @@ class Graph {
         this.update();
     }
 
+    formatAttributes(attributes) {
+        function convertStrToType(val, type) {
+            switch (type) {
+                case 'long':
+                case 'short':
+                case 'int':
+                    const numericVal = parseInt(val);
+                    return isNaN(numericVal) ? val : numericVal;
+                case 'double':
+                case 'float':
+                    const floatVal = parseFloat(val);
+                    return isNaN(floatVal) ? val : floatVal;
+                case 'boolean':
+                    return val === 'true' ? true : val === 'false' ? false : val;
+            }
+            return val;
+        }
+
+        const suffix = "Attributes";
+        let attrMap = new Map();
+        attributes.forEach(attr => {
+            const attrType = attr.type + suffix;
+            let attrObj = {};
+            if (attrMap.has(attrType)) {
+                attrObj = attrMap.get(attrType);
+            }
+            attrObj[attr.key] = convertStrToType(attr.value, attr.type);
+            attrMap.set(attrType, attrObj);
+        });
+        return Object.fromEntries(attrMap);
+    }
+
     toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
             const source = edge.source;
             const target = edge.target;
             const document = source.nodeType === "document" ? source : target;
             const entity = source.nodeType === "entity" ? source : target;
-            return { edgeId: edge.id, documentId: document.id, documentType: document.type, entityId: entity.id, entityType: entity.type, attributes: edge.attributes };
+            const eid = this.edgeId(edge);
+            return {
+                edgeId: eid,
+                edgeType: document.type + '-' + entity.type,
+                label: document.type + '-' + entity.type + eid,
+                documentId: document.id,
+                documentType: document.type,
+                entityId: entity.id,
+                entityType: entity.type,
+                attributes: this.formatAttributes(edge.attributes)
+            };
         });
         const documentsAndEntities = this.nodes.reduce((acc, node) => {
             if (node.nodeType === "document") {
-                acc.documents.push(node);
+                const doc = {
+                    documentId: node.id,
+                    documentType: node.type,
+                    label: node.type + node.id,
+                    attributes: this.formatAttributes(node.attributes)
+                };
+                acc.documents.push(doc);
             } else if (node.nodeType === "entity") {
-                acc.entities.push(node);
+                const ent = {
+                    entityId: node.id,
+                    entityType: node.type,
+                    label: node.type + node.id,
+                    attributes: this.formatAttributes(node.attributes),
+                    records: []
+                };
+                acc.entities.push(ent);
             }
             return acc;
         }, { documents: [], entities: [] });
 
-        return new window.Blob([window.JSON.stringify({ "documents": documentsAndEntities.documents, "entities": documentsAndEntities.entities, "edges": saveEdges })], { type: "text/plain;charset=utf-8" });
+        return new window.Blob([window.JSON.stringify(
+            {
+                "documents": documentsAndEntities.documents,
+                "entities": documentsAndEntities.entities,
+                "edges": saveEdges
+            }
+            )], { type: "text/plain;charset=utf-8" });
     }
 }
 
