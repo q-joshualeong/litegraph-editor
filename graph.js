@@ -501,7 +501,7 @@ class Graph {
                 case 'long':
                 case 'short':
                 case 'int':
-                    return /^([0-9]*)$/.test(val);
+                    return /^([-+]?[0-9]*)$/.test(val);
                 case 'double':
                 case 'float':
                     return /^[-+]?[0-9]*(\.[0-9]+)$/.test(val);
