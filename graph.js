@@ -723,7 +723,7 @@ class Graph {
                 "entities": documentsAndEntities.entities,
                 "edges": saveEdges
             }
-            )], { type: "text/plain;charset=utf-8" });
+            , null, 2)], { type: "text/plain;charset=utf-8" });
     }
 }
 
