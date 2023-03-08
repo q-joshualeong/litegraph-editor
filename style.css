@@ -1,62 +1,24 @@
 :root {
     --text-width: 38.6rem;
-    --smaller-text: 0.9rem;
     --text-color: black;
-    --background-color: #f8f8f8;
-    --details-background-color: #E8E8E8;
-    --highlight-color: firebrick;
+    --canvas-color: #11071c;
+    --node-color: #1e0d32;
+    --edge-color: white;
+    --border-color: white;
+    --selected-color: #b5027a;
+    --node-text-color: white;
     font-size: 105%;
     font-family: "Helvetica", "Arial", sans-serif;
     line-height: 1.5;
     overflow: auto;
-    background-color: var(--background-color);
+    background-color: #f8f8f8;
     color: var(--text-color);
-    color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-color: rgb(190, 186, 181);
-        --background-color: #161718;
-        --details-background-color: #242426;
-        --highlight-color: rgb(213, 67, 67);
-    }
-
-    a {
-        color: rgb(83, 154, 212);
-    }
 }
 
 body {
     margin: auto;
     max-width: var(--text-width);
     padding: 0.7em 0.7em;
-}
-
-/* Header */
-
-header time {
-    font-size: 0.9rem;
-}
-
-header h1 {
-    margin-bottom: 0;
-}
-
-/* List of articles */
-
-ul.articles {
-    list-style-type: square;
-    line-height: 1.1;
-    padding: 0;
-}
-
-ul.articles > li {
-    margin-bottom: 0.3em;
-}
-
-ul.articles>li>a {
-    text-decoration: none;
 }
 
 /* Headers */
@@ -73,39 +35,7 @@ h3 {
     font-size: 1em;
 }
 
-/* Links */
-
-a {
-    text-decoration: underline;
-}
-
-a:hover {
-    opacity: 0.7;
-}
-
-a[href ^="/"], a[href ^="mailto"], a[href ^= "#"] {
-    color: var(--text-color);
-}
-
-/* Code */
-
-code {
-    font-family: 'Courier New', monospace;
-    font-size: 0.94em;
-}
-
-/* Blocks between text */
-
-blockquote {
-    border-left: 0.3em solid #CCC;
-    font-size: var(--smaller-text);
-}
-
-ol, ul, blockquote {
-    margin-left: 1em;
-    margin-right: 1em;
-    padding-left: 1em;
-}
+/* Canvas figure */
 
 figure {
     text-align: center;
@@ -113,25 +43,11 @@ figure {
     margin-right: auto;
 }
 
-figcaption {
-    font-size: var(--smaller-text);
-    text-align: center;
-}
-
-img {
-    display: block;
-    max-width: 100%;
-    margin: auto;
-}
+/* Attribute tables */
 
 table {
     border-collapse: collapse;
-}
-
-table,
-th,
-td {
-    border: 1px solid;
+    margin-bottom: 12px;
 }
 
 th,
@@ -139,21 +55,23 @@ td {
     padding: 0.1rem 0.3rem;
 }
 
-pre {
-    background-color: var(--details-background-color);
-    padding: 1rem;
-    overflow-x: scroll;
-    font-size: 1rem;
-    line-height: 1.2;
+table th {
+	background-color: #54585d;
+	color: #ffffff;
+	font-weight: bold;
+	border: 1px solid #54585d;
 }
 
-summary {
-    cursor: pointer;
-    background-color: var(--background-color);
+table tbody td {
+	color: #636363;
+	border: 1px solid #dddfe1;
+}
+table tbody tr {
+	background-color: #f9fafb;
 }
 
-details {
-    background-color: var(--details-background-color);
+table tbody tr:nth-child(odd) {
+	background-color: #ffffff;
 }
 
 /* SVG: some useful defaults */
@@ -181,32 +99,30 @@ svg.verzettelung text {
     margin: calc(1em - 1px) 0;
 }
 
-/* Footnotes */
-
-.footnotes {
-    font-size: 0.9em;
+/* Buttons */
+input[type=button], input::file-selector-button {
+  background-color: #fff;
+  border: 1px solid #d5d9d9;
+  border-radius: 8px;
+  box-shadow: rgba(213, 217, 217, .5) 0 2px 5px 0;
+  box-sizing: border-box;
+  color: #0f1111;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Amazon Ember",sans-serif;
+  font-size: 13px;
+  line-height: 29px;
+  padding: 0 10px 0 11px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+  width: 100px;
 }
 
-.footnotes>p {
-    margin: 0.2em;
-}
-
-/* References */
-
-.references {
-    list-style: none;
-    margin: 0;
-    padding-left: 1em;
-}
-
-.references>li {
-    text-indent: -1em;
-}
-
-/* Navigation */
-
-footer {
-    margin-top: 1.5em;
-    margin-bottom: 1em;
-    text-align: center;
+input[type=button]:hover, input::file-selector-button:hover {
+  background-color: #f7fafa;
 }
