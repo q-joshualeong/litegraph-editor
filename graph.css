@@ -3,29 +3,27 @@ text {
     fill: var(--text-color);
 }
 
-foreignObject {
-    font-size: 30px;
-}
-
 svg {
-    border: 1px solid;
+    background-color: var(--canvas-color);
+    box-shadow: inset 0 0 3px #c9cfd4;
 }
 
 /* Nodes */
 
 g.node > circle {
-    stroke: var(--text-color);
-    fill: var(--background-color);
+    stroke: var(--border-color);
+    fill: var(--node-color);
     stroke-width: 2px;
 }
 
 g.node > rect {
-    stroke: var(--text-color);
-    fill: var(--background-color);
+    stroke: var(--border-color);
+    fill: var(--node-color);
     stroke-width: 2px;
 }
 
 g.node > text {
+    fill: var(--node-text-color);
     text-anchor: middle;
     dominant-baseline: middle;
 }
@@ -34,32 +32,34 @@ g.node:hover {
     cursor: grab;
 }
 
-g.node.selected>circle {
-    fill: orange;
+g.node.selected > circle {
+    fill: var(--selected-color);
+    filter: var(--selected-drop-shadow);
 }
 
-g.node.selected>rect {
-    fill: orange;
+g.node.selected > rect {
+    fill: var(--selected-color);
+    filter: var(--selected-drop-shadow);
 }
 
 g.node.selected > marker {
-    fill: orange;
+    fill: var(--selected-color);
 }
 
 g.node.selected > text {
-    fill: black;
+    fill: var(--node-text-color);
 }
 
 g.node:hover > circle {
-    fill: orange;
+    fill: var(--selected-color);
 }
 
 g.node:hover > rect {
-    fill: orange;
+    fill: var(--selected-color);
 }
 
 g.node:hover > text {
-    fill: black;
+    fill: var(--node-text-color);
 }
 
 text.hidden {
@@ -71,7 +71,7 @@ text.hidden {
 
 path.line.hidden {
     stroke-width: 0;
-    stroke: var(--background-color);
+    stroke: var(--edge-color);
 }
 
 path.line {
@@ -80,13 +80,18 @@ path.line {
     marker-end: url("#end-arrow")
 }
 
+.edge > path {
+    stroke: var(--edge-color);
+}
+
 .edge.selected > path {
-    stroke: orange;
+    stroke: var(--selected-color);
+    filter: var(--selected-drop-shadow);
     marker-end: url("#selected-end-arrow");
 }
 
 .edge.selected > text {
-    fill: orange;
+    fill: var(--node-text-color);
 }
 
 marker {
@@ -94,11 +99,11 @@ marker {
 }
 
 #selected-end-arrow {
-    fill: orange;
+    fill: var(--selected-color);
 }
 
 #selected-end-arrow > path {
-    stroke: orange;
+    stroke: var(--selected-color);
 }
 
 .edge:hover {
@@ -107,16 +112,17 @@ marker {
 
 .edge:hover .line {
     marker-end: url("#selected-end-arrow");
-    stroke: orange;
+    stroke: var(--selected-color);
 }
 
 .edge:hover text {
-    fill: orange;
+    fill: var(--node-text-color);
 }
 
 /* Intermediate edge during drag */
 
 path.line.dragline {
+    stroke: var(--edge-color);
     marker-end: url("#mark-end-arrow");
 }
 
@@ -125,6 +131,6 @@ path.line.dragline.hidden {
 }
 
 path.line.dragline:hover {
-    stroke: var(--text-color);
+    stroke: var(--edge-color);
     cursor: pointer;
 }
