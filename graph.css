@@ -34,12 +34,12 @@ g.node:hover {
 
 g.node.selected > circle {
     fill: var(--selected-color);
-    filter: drop-shadow(0px 0px 20px rgb(181 2 122 / 0.9));
+    filter: var(--selected-drop-shadow);
 }
 
 g.node.selected > rect {
     fill: var(--selected-color);
-    filter: drop-shadow(0px 0px 20px rgb(181 2 122 / 0.9));
+    filter: var(--selected-drop-shadow);
 }
 
 g.node.selected > marker {
@@ -86,6 +86,7 @@ path.line {
 
 .edge.selected > path {
     stroke: var(--selected-color);
+    filter: var(--selected-drop-shadow);
     marker-end: url("#selected-end-arrow");
 }
 

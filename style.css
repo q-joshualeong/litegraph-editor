@@ -7,8 +7,9 @@
     --border-color: white;
     --selected-color: #b5027a;
     --node-text-color: white;
+    --selected-drop-shadow: drop-shadow(0px 0px 20px rgb(181 2 122 / 0.9));
     font-size: 105%;
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Calibri", "Arial", sans-serif;
     line-height: 1.5;
     overflow: auto;
     background-color: #f8f8f8;
@@ -19,20 +20,6 @@ body {
     margin: auto;
     max-width: var(--text-width);
     padding: 0.7em 0.7em;
-}
-
-/* Headers */
-
-h1 {
-    font-size: 1.5em;
-}
-
-h2 {
-    font-size: 1.2em;
-}
-
-h3 {
-    font-size: 1em;
 }
 
 /* Canvas figure */
@@ -47,7 +34,9 @@ figure {
 
 table {
     border-collapse: collapse;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
+    text-align: left;
+    font-size: 15px;
 }
 
 th,
@@ -100,29 +89,41 @@ svg.verzettelung text {
 }
 
 /* Buttons */
-input[type=button], input::file-selector-button {
-  background-color: #fff;
-  border: 1px solid #d5d9d9;
-  border-radius: 8px;
-  box-shadow: rgba(213, 217, 217, .5) 0 2px 5px 0;
-  box-sizing: border-box;
-  color: #0f1111;
-  cursor: pointer;
-  display: inline-block;
-  font-family: "Amazon Ember",sans-serif;
-  font-size: 13px;
-  line-height: 29px;
-  padding: 0 10px 0 11px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: middle;
-  width: 100px;
+button {
+    background-color: #fff;
+    border: 1px solid #d5d9d9;
+    border-radius: 4px;
+    box-shadow: rgba(213, 217, 217, .5) 0 2px 5px 0;
 }
 
-input[type=button]:hover, input::file-selector-button:hover {
-  background-color: #f7fafa;
+button:disabled {
+    background-color: #e0e5e9;
+    cursor: not-allowed;
+}
+
+input[type=button], input::file-selector-button {
+    background-color: #fff;
+    border: 1px solid #d5d9d9;
+    border-radius: 8px;
+    box-shadow: rgba(213, 217, 217, .5) 0 2px 5px 0;
+    box-sizing: border-box;
+    color: #0f1111;
+    cursor: pointer;
+    display: inline-block;
+    font-family: "Amazon Ember",sans-serif;
+    font-size: 13px;
+    line-height: 29px;
+    padding: 0 10px 0 11px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: middle;
+    width: 100px;
+}
+
+button:hover, input[type=button]:hover, input::file-selector-button:hover {
+    background-color: #e0e5e9;
 }
