@@ -16,6 +16,16 @@
     color: var(--text-color);
 }
 
+.light-theme {
+    --canvas-color: white;
+    --node-color: #e0e5e9;
+    --edge-color: #9a98a2;
+    --border-color: #c9cfd4;
+    --selected-color: #19e5c0;
+    --node-text-color: black;
+    --selected-drop-shadow: drop-shadow(0px 0px 20px rgb(25 229 192 / 0.9));
+}
+
 body {
     margin: auto;
     max-width: var(--text-width);
