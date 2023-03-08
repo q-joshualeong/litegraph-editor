@@ -80,6 +80,7 @@ class Graph {
                     node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
+                    event.stopImmediatePropagation();
                 }
 
                 if (event.ctrlKey) {
@@ -92,6 +93,7 @@ class Graph {
                     node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("document");
+                    event.stopImmediatePropagation();
                 }
             })
             .on('click', () => {
