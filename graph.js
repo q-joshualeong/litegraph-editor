@@ -71,6 +71,7 @@ class Graph {
         this.svg
             .on("mousedown", (event, d) => {
                 if (event.shiftKey) {
+                    event.stopImmediatePropagation(); // prevents nodes from sticking to cursor
                     const entityType = prompt("Enter entity type: ")
                     if (entityType === null || entityType === "") {
                         return;
@@ -84,6 +85,7 @@ class Graph {
                 }
 
                 if (event.ctrlKey) {
+                    event.stopImmediatePropagation();
                     const docType = prompt("Enter document type: ")
                     if (docType === null || docType === "") {
                         return;
@@ -93,7 +95,6 @@ class Graph {
                     node.title = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("document");
-                    event.stopImmediatePropagation();
                 }
             })
             .on('click', () => {
@@ -532,7 +533,6 @@ class Graph {
             headerRow.append('th');
 
             // Add other data rows (all the attributes)
-            console.log(nodeOrEdge)
             const attributeRows = table.selectAll('tr.attribute')
                 .data(Object.entries(nodeOrEdge.attributes))
                 .enter()
@@ -608,7 +608,6 @@ class Graph {
                     const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
                     const newType = buttonRow.select('select[name="type"]').property('value');
                     if (newKey && newValue) {
-                        console.log(newKey, newValue, newType)
                         nodeOrEdge.attributes.push({"key": newKey, "value": newValue, "type": newType})
                         buttonRow.select('input[type="text"][name="key"]:first-child').property('value', '');
                         buttonRow.select('input[type="text"][name="value"]:first-child').property('value', '');
