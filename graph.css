@@ -71,11 +71,11 @@ text.hidden {
 
 path.line.hidden {
     stroke-width: 0;
-    stroke: var(--edge-color);
+    stroke: var(--canvas-color);
 }
 
 path.line {
-    stroke: var(--text-color);
+    stroke: var(--edge-color);
     stroke-width: 6px;
     marker-end: url("#end-arrow")
 }
@@ -95,7 +95,7 @@ path.line {
 }
 
 marker {
-    fill: var(--text-color);
+    fill: var(--edge-color);
 }
 
 #selected-end-arrow {

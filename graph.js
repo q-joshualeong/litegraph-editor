@@ -114,7 +114,10 @@ class Graph {
             .on("drag", function (event, d) {
                 if (graph.state.shiftNodeDrag) {
                     const pos = d3.pointer(event, graph.plot.node());
-                    graph.dragLine.attr('d', 'M' + d.x + ',' + d.y + 'L' + pos[0] + ',' + pos[1]);
+                    // make line start from center of square when dragging a new edge
+                    const lineStartPos = d.nodeType == "document" ? [d.x + graph.consts.RECT_WIDTH / 2, d.y + graph.consts.RECT_HEIGHT / 2] : [d.x, d.y];
+                    graph.dragLine.attr('d', 'M' + lineStartPos[0] + ',' + lineStartPos[1] + 'L' + pos[0] + ',' + pos[1]);
+                    graph.dragLine.classed('hidden', false);
                 } else {
                     d.x = event.x;
                     d.y = event.y;
@@ -224,8 +227,6 @@ class Graph {
                             event.stopPropagation();
                             if (event.shiftKey) {
                                 this.state.shiftNodeDrag = true;
-                                this.dragLine.classed('hidden', false)
-                                    .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
                             }
                         })
                         .on("mouseover", (event, d) => { this.state.mouseOverNode = d; })
