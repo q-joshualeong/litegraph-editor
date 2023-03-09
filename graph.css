@@ -26,6 +26,11 @@ g.node > text {
     fill: var(--node-text-color);
     text-anchor: middle;
     dominant-baseline: middle;
+    /* disable accidental text highlighting */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer */
+    user-select: none;
 }
 
 g.node:hover {
