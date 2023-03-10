@@ -1,3 +1,24 @@
+class GraphNode {
+    constructor(id, nodeType, type, attributes, pos) {
+        this.id = id;
+        this.nodeType = nodeType;
+        this.type = type;
+        this.title = type + "-" + id;
+        this.x = pos[0];
+        this.y = pos[1];
+        this.attributes = attributes;
+    }
+}
+
+class GraphEdge {
+    constructor(source, target, attributes, label) {
+        this.source = source;
+        this.target = target;
+        this.attributes = attributes;
+        this.label = label
+    }
+}
+
 class Graph {
     constructor(opts) {
         this.svg = opts.svg;
@@ -30,15 +51,10 @@ class Graph {
         this.edges = edges.map(e => {
             const sourceNode = this.nodes.find(n => n.id === e.source);
             const targetNode = this.nodes.find(n => n.id === e.target);
-            return {
-                source: sourceNode,
-                target: targetNode,
-                attributes: [],
-                label: e.label
-            }
+            console.log(sourceNode, targetNode)
+            return new GraphEdge(sourceNode, targetNode, e.attributes, e.label)
         });
     }
-
 
     draw() {
         d3.select(window).on("keydown", (event) => {
@@ -76,8 +92,7 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const node = new GraphNode(++this.nodeId, "entity", entityType, [], pos)
                     this.nodes.push(node);
                     this.updateNodes("entity");
                     event.stopImmediatePropagation();
@@ -89,8 +104,8 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, title: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const newPos = [pos[0]-this.consts.RECT_WIDTH/2, pos[1]-this.consts.RECT_HEIGHT/2]
+                    const node = new GraphNode(++this.nodeId, "document", docType, [], newPos)
                     this.nodes.push(node);
                     this.updateNodes("document");
                     event.stopImmediatePropagation();
@@ -206,9 +221,9 @@ class Graph {
             .attr('d', 'M-20,-10L0,0L-20,10');
     }
 
-    update() {
+    update(nodeType) {
         this.updateEdges();
-        this.updateNodes();
+        this.updateNodes(nodeType);
     }
 
     updateNodes(nodeType) {
@@ -263,6 +278,7 @@ class Graph {
                 exit => exit.remove()
             );
     }
+
 
     makeEntity(nodes) {
         nodes.append("circle")
@@ -531,7 +547,6 @@ class Graph {
             headerRow.append('th');
 
             // Add other data rows (all the attributes)
-            console.log(nodeOrEdge)
             const attributeRows = table.selectAll('tr.attribute')
                 .data(Object.entries(nodeOrEdge.attributes))
                 .enter()
@@ -638,13 +653,25 @@ class Graph {
         }
     }
 
-    load(nodes, edges) {
+    loadDocuments(nodes) {
         this.nodeId = nodes.reduce(function (prev, curr) {
             return (prev.id > curr.id) ? prev.id : curr.id
         });
-        this.nodes = nodes;
+        this.nodes = this.nodes.concat(nodes)
+        this.updateNodes("document");
+    }
+
+    loadEntities(nodes) {
+        this.nodeId = nodes.reduce(function (prev, curr) {
+            return (prev.id > curr.id) ? prev.id : curr.id
+        });
+        this.nodes = this.nodes.concat(nodes)
+        this.updateNodes("entity");
+    }
+
+    loadEdges(edges) {
         this.setEdges(edges);
-        this.update();
+        this.updateEdges()
     }
 
     formatAttributes(attributes) {
@@ -731,6 +758,21 @@ class Graph {
 
 /* Main */
 
+function convertLiteGraphAttributesToD3Attributes(attributes) {
+    const result = [];
+    // Iterate over all attribute types
+    for (const [attrType, attrObj] of Object.entries(attributes)) {
+        // Iterate over each attribute in the current type
+        for (const [key, value] of Object.entries(attrObj)) {
+            // Determine the type of the current attribute value
+            const type = attrType.replace(/Attributes$/, '') ;
+            // Construct a new object with the name, value, and type properties
+            result.push({ key: key, value: value, type: type });
+        }
+    }
+    return result
+}
+
 const graph = new Graph({
     svg: d3.select("#graph"),
     nodes: [],
@@ -761,10 +803,25 @@ d3.select("#select-file").on("change", function () {
     fr.onload = function (e) {
         try {
             const result = JSON.parse(e.target.result);
-            graph.load(result.nodes, result.edges);
+            console.log(result)
+            const docs = result.documents.map(doc => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes)
+                return new GraphNode(doc.documentId, "document", doc.documentType, attributes, [100,100])
+            })
+            const entities = result.entities.map(ent => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes)
+                return new GraphNode(ent.entityId, "entity", ent.entityType, attributes, [200, 200])
+            })
+            const edges = result.edges.map( edge => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes)
+                return {"source": edge.documentId, "target": edge.entityId, "attributes": attributes, "label": edge.label}
+                }
+            )
+            graph.loadDocuments(docs);
+            graph.loadEntities(entities);
+            graph.loadEdges(edges);
         } catch (err) {
             window.alert("Error loading graph from file!\nError message: " + err.message);
-            return;
         }
     }
 
