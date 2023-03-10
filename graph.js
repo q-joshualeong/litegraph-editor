@@ -71,29 +71,30 @@ class Graph {
         this.svg
             .on("mousedown", (event, d) => {
                 if (event.shiftKey) {
+                    event.stopImmediatePropagation(); // prevents nodes from sticking to cursor
                     const entityType = prompt("Enter entity type: ")
                     if (entityType === null || entityType === "") {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, label: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
                     event.stopImmediatePropagation();
                 }
 
                 if (event.ctrlKey) {
+                    event.stopImmediatePropagation();
                     const docType = prompt("Enter document type: ")
                     if (docType === null || docType === "") {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, title: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, label: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
+                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("document");
-                    event.stopImmediatePropagation();
                 }
             })
             .on('click', () => {
@@ -114,7 +115,10 @@ class Graph {
             .on("drag", function (event, d) {
                 if (graph.state.shiftNodeDrag) {
                     const pos = d3.pointer(event, graph.plot.node());
-                    graph.dragLine.attr('d', 'M' + d.x + ',' + d.y + 'L' + pos[0] + ',' + pos[1]);
+                    // make line start from center of square when dragging a new edge
+                    const lineStartPos = d.nodeType == "document" ? [d.x + graph.consts.RECT_WIDTH / 2, d.y + graph.consts.RECT_HEIGHT / 2] : [d.x, d.y];
+                    graph.dragLine.attr('d', 'M' + lineStartPos[0] + ',' + lineStartPos[1] + 'L' + pos[0] + ',' + pos[1]);
+                    graph.dragLine.classed('hidden', false);
                 } else {
                     d.x = event.x;
                     d.y = event.y;
@@ -140,7 +144,8 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { source: source, target: target, attributes: []};
+                    var newEdge = { id: "", type: "", label: "", source: source, target: target, attributes: []};
+                    this.populateEdgeDefaults(newEdge);
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -224,8 +229,6 @@ class Graph {
                             event.stopPropagation();
                             if (event.shiftKey) {
                                 this.state.shiftNodeDrag = true;
-                                this.dragLine.classed('hidden', false)
-                                    .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
                             }
                         })
                         .on("mouseover", (event, d) => { this.state.mouseOverNode = d; })
@@ -258,7 +261,7 @@ class Graph {
                         .classed("selected", d => { return d === this.state.selectedNode; });
 
                     update.select("text")
-                        .text(d => { return d.title; });
+                        .text(d => { return d.label; });
                 },
                 exit => exit.remove()
             );
@@ -268,7 +271,7 @@ class Graph {
         nodes.append("circle")
             .attr("r", String(this.consts.NODE_RADIUS));
         nodes.append("text")
-            .text(d => { return d.title; });
+            .text(d => { return d.label; });
     }
 
     makeDocument(nodes) {
@@ -279,7 +282,7 @@ class Graph {
         nodes.append("text")
             .attr("dx", this.consts.RECT_WIDTH/2)
             .attr("dy", this.consts.RECT_HEIGHT/2)
-            .text(d => { return d.title; });
+            .text(d => { return d.label; });
     }
 
     editNodeLabel(d, nodeType) {
@@ -303,7 +306,7 @@ class Graph {
                 .attr("contentEditable", "true")
                 .style("text-align", "center")
                 //.style("border", "1px solid")
-                .text(d.title)
+                .text(d.label)
                 .on("mousedown", (event, d) => {
                     event.stopPropagation();
                 })
@@ -314,7 +317,7 @@ class Graph {
                     }
                 })
                 .on("blur", (event, d) => {
-                    d.title = event.target.textContent;
+                    d.label = event.target.textContent;
                     d3.select(event.target.parentElement).remove();
                     this.updateNodes();
                     text.classed("hidden", false);
@@ -336,7 +339,7 @@ class Graph {
                 .attr("contentEditable", "true")
                 .style("text-align", "center")
                 //.style("border", "1px solid")
-                .text(d.title)
+                .text(d.label)
                 .on("mousedown", (event, d) => {
                     event.stopPropagation();
                 })
@@ -347,7 +350,7 @@ class Graph {
                     }
                 })
                 .on("blur", (event, d) => {
-                    d.title = event.target.textContent;
+                    d.label = event.target.textContent;
                     d3.select(event.target.parentElement).remove();
                     this.updateNodes();
                     text.classed("hidden", false);
@@ -365,6 +368,21 @@ class Graph {
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
+    edgeId(d) {
+        return String(d.source.id) + "+" + String(d.target.id);
+    }
+
+    // Fill edges with edge ID and default label and type
+    populateEdgeDefaults(edge) {
+        const source = edge.source;
+        const target = edge.target;
+        const document = source.nodeType === "document" ? source : target;
+        const entity = source.nodeType === "entity" ? source : target;
+        edge.id = this.edgeId(edge);
+        edge.type = document.type + '-' + entity.type;
+        edge.label = document.type + '-' + entity.type + edge.id;
+    }
+
     updateEdges() {
         this.paths.selectAll(".edge")
             .data(this.edges, this.edgeId)
@@ -378,8 +396,9 @@ class Graph {
                                 this.editEdgeLabel(d);
                             } else {
                                 this.state.selectedEdge = d;
-                                this.showAttributeData(d);
                                 this.state.selectedNode = null;
+                                this.showAttributeData(d);
+                                this.showNodeData(d);
                                 this.update();
                             }
                         })
@@ -415,10 +434,6 @@ class Graph {
                 },
                 exit => exit.remove()
             );
-    }
-
-    edgeId(d) {
-        return String(d.source.id) + "+" + String(d.target.id);
     }
 
     editEdgeLabel(d) {
@@ -531,7 +546,6 @@ class Graph {
             headerRow.append('th');
 
             // Add other data rows (all the attributes)
-            console.log(nodeOrEdge)
             const attributeRows = table.selectAll('tr.attribute')
                 .data(Object.entries(nodeOrEdge.attributes))
                 .enter()
@@ -607,7 +621,6 @@ class Graph {
                     const newValue = buttonRow.select('input[type="text"][name="value"]:first-child').property('value');
                     const newType = buttonRow.select('select[name="type"]').property('value');
                     if (newKey && newValue) {
-                        console.log(newKey, newValue, newType)
                         nodeOrEdge.attributes.push({"key": newKey, "value": newValue, "type": newType})
                         buttonRow.select('input[type="text"][name="key"]:first-child').property('value', '');
                         buttonRow.select('input[type="text"][name="value"]:first-child').property('value', '');
@@ -681,15 +694,12 @@ class Graph {
 
     toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
-            const source = edge.source;
-            const target = edge.target;
-            const document = source.nodeType === "document" ? source : target;
-            const entity = source.nodeType === "entity" ? source : target;
-            const eid = this.edgeId(edge);
+            const document = edge.source.nodeType === "document" ? edge.source : edge.target;
+            const entity = edge.source.nodeType === "entity" ? edge.source : edge.target;
             return {
-                edgeId: eid,
-                edgeType: document.type + '-' + entity.type,
-                label: document.type + '-' + entity.type + eid,
+                edgeId: edge.id,
+                edgeType: edge.type,
+                label: edge.label,
                 documentId: document.id,
                 documentType: document.type,
                 entityId: entity.id,
