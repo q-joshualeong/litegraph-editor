@@ -77,8 +77,8 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, title: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, label: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
                     event.stopImmediatePropagation();
@@ -91,8 +91,8 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, title: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
-                    node.title = node.type + "-" + node.id
+                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, label: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
+                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -144,7 +144,8 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { source: source, target: target, attributes: []};
+                    var newEdge = { id: "", type: "", label: "", source: source, target: target, attributes: []};
+                    this.populateEdgeDefaults(newEdge);
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -260,7 +261,7 @@ class Graph {
                         .classed("selected", d => { return d === this.state.selectedNode; });
 
                     update.select("text")
-                        .text(d => { return d.title; });
+                        .text(d => { return d.label; });
                 },
                 exit => exit.remove()
             );
@@ -270,7 +271,7 @@ class Graph {
         nodes.append("circle")
             .attr("r", String(this.consts.NODE_RADIUS));
         nodes.append("text")
-            .text(d => { return d.title; });
+            .text(d => { return d.label; });
     }
 
     makeDocument(nodes) {
@@ -281,7 +282,7 @@ class Graph {
         nodes.append("text")
             .attr("dx", this.consts.RECT_WIDTH/2)
             .attr("dy", this.consts.RECT_HEIGHT/2)
-            .text(d => { return d.title; });
+            .text(d => { return d.label; });
     }
 
     editNodeLabel(d, nodeType) {
@@ -305,7 +306,7 @@ class Graph {
                 .attr("contentEditable", "true")
                 .style("text-align", "center")
                 //.style("border", "1px solid")
-                .text(d.title)
+                .text(d.label)
                 .on("mousedown", (event, d) => {
                     event.stopPropagation();
                 })
@@ -316,7 +317,7 @@ class Graph {
                     }
                 })
                 .on("blur", (event, d) => {
-                    d.title = event.target.textContent;
+                    d.label = event.target.textContent;
                     d3.select(event.target.parentElement).remove();
                     this.updateNodes();
                     text.classed("hidden", false);
@@ -338,7 +339,7 @@ class Graph {
                 .attr("contentEditable", "true")
                 .style("text-align", "center")
                 //.style("border", "1px solid")
-                .text(d.title)
+                .text(d.label)
                 .on("mousedown", (event, d) => {
                     event.stopPropagation();
                 })
@@ -349,7 +350,7 @@ class Graph {
                     }
                 })
                 .on("blur", (event, d) => {
-                    d.title = event.target.textContent;
+                    d.label = event.target.textContent;
                     d3.select(event.target.parentElement).remove();
                     this.updateNodes();
                     text.classed("hidden", false);
@@ -367,6 +368,21 @@ class Graph {
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
+    edgeId(d) {
+        return String(d.source.id) + "+" + String(d.target.id);
+    }
+
+    // Fill edges with edge ID and default label and type
+    populateEdgeDefaults(edge) {
+        const source = edge.source;
+        const target = edge.target;
+        const document = source.nodeType === "document" ? source : target;
+        const entity = source.nodeType === "entity" ? source : target;
+        edge.id = this.edgeId(edge);
+        edge.type = document.type + '-' + entity.type;
+        edge.label = document.type + '-' + entity.type + edge.id;
+    }
+
     updateEdges() {
         this.paths.selectAll(".edge")
             .data(this.edges, this.edgeId)
@@ -380,8 +396,9 @@ class Graph {
                                 this.editEdgeLabel(d);
                             } else {
                                 this.state.selectedEdge = d;
-                                this.showAttributeData(d);
                                 this.state.selectedNode = null;
+                                this.showAttributeData(d);
+                                this.showNodeData(d);
                                 this.update();
                             }
                         })
@@ -417,10 +434,6 @@ class Graph {
                 },
                 exit => exit.remove()
             );
-    }
-
-    edgeId(d) {
-        return String(d.source.id) + "+" + String(d.target.id);
     }
 
     editEdgeLabel(d) {
@@ -681,15 +694,12 @@ class Graph {
 
     toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
-            const source = edge.source;
-            const target = edge.target;
-            const document = source.nodeType === "document" ? source : target;
-            const entity = source.nodeType === "entity" ? source : target;
-            const eid = this.edgeId(edge);
+            const document = edge.source.nodeType === "document" ? edge.source : edge.target;
+            const entity = edge.source.nodeType === "entity" ? edge.source : edge.target;
             return {
-                edgeId: eid,
-                edgeType: document.type + '-' + entity.type,
-                label: document.type + '-' + entity.type + eid,
+                edgeId: edge.id,
+                edgeType: edge.type,
+                label: edge.label,
                 documentId: document.id,
                 documentType: document.type,
                 entityId: entity.id,
