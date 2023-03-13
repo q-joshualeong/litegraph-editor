@@ -1,5 +1,5 @@
 :root {
-    --text-width: 38.6rem;
+    --canvas-width: 50%;
     --text-color: black;
     --canvas-color: #11071c;
     --node-color: #1e0d32;
@@ -8,7 +8,6 @@
     --selected-color: #b5027a;
     --node-text-color: white;
     --selected-drop-shadow: drop-shadow(0px 0px 20px rgb(181 2 122 / 0.9));
-    font-size: 105%;
     font-family: "Calibri", "Arial", sans-serif;
     line-height: 1.5;
     overflow: auto;
@@ -28,7 +27,8 @@
 
 body {
     margin: auto;
-    max-width: var(--text-width);
+    width: var(--canvas-width);
+    text-align: center;
     padding: 0.7em 0.7em;
 }
 
@@ -99,6 +99,10 @@ svg.verzettelung text {
 }
 
 /* Buttons */
+#util-buttons {
+    text-align: left;
+}
+
 button {
     background-color: #fff;
     border: 1px solid #d5d9d9;

@@ -1,5 +1,5 @@
 text {
-    font-size: 30px;
+    font-size: 20px;
     fill: var(--text-color);
 }
 
@@ -81,8 +81,8 @@ path.line.hidden {
 
 path.line {
     stroke: var(--edge-color);
-    stroke-width: 6px;
-    marker-end: url("#end-arrow")
+    stroke-width: 4px;
+    /* marker-end: url("#end-arrow") */
 }
 
 .edge > path {
@@ -92,7 +92,7 @@ path.line {
 .edge.selected > path {
     stroke: var(--selected-color);
     filter: var(--selected-drop-shadow);
-    marker-end: url("#selected-end-arrow");
+    /* marker-end: url("#selected-end-arrow"); */
 }
 
 .edge.selected > text {
@@ -116,7 +116,7 @@ marker {
 }
 
 .edge:hover .line {
-    marker-end: url("#selected-end-arrow");
+    /* marker-end: url("#selected-end-arrow"); */
     stroke: var(--selected-color);
 }
 
