@@ -16,9 +16,9 @@ class Graph {
         this.consts = {
             BACKSPACE_KEY: 8,
             DELETE_KEY: 46,
-            NODE_RADIUS: 75,
-            RECT_WIDTH: 150,
-            RECT_HEIGHT: 150,
+            NODE_RADIUS: 50,
+            RECT_WIDTH: 100,
+            RECT_HEIGHT: 100,
             CLICK_DISTANCE: 5,
             ENTER_KEY: 13,
         }
