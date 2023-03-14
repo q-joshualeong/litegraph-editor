@@ -16,11 +16,13 @@ class Graph {
         this.consts = {
             BACKSPACE_KEY: 8,
             DELETE_KEY: 46,
-            NODE_RADIUS: 75,
-            RECT_WIDTH: 150,
-            RECT_HEIGHT: 150,
+            NODE_RADIUS: 50,
+            RECT_WIDTH: 100,
+            RECT_HEIGHT: 100,
             CLICK_DISTANCE: 5,
             ENTER_KEY: 13,
+            MAX_ZOOM: 5,
+            MIN_ZOOM: 0.3
         }
         this.draw();
     }
@@ -57,6 +59,7 @@ class Graph {
 
         // add zoom behavior to whole svg
         const zoom = d3.zoom()
+            .scaleExtent([this.consts.MIN_ZOOM, this.consts.MAX_ZOOM])
             .clickDistance(this.consts.CLICK_DISTANCE)
             .on('zoom', (event) => {
                 this.plot.attr('transform', event.transform);
