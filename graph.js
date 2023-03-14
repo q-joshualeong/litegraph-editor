@@ -28,9 +28,9 @@ class Graph {
     setEdges(edges) {
         // map source and target id to respective node
         this.edges = edges.map(e => {
-            const sourceNode = this.nodes.find(n => n.id === e.source);
-            const targetNode = this.nodes.find(n => n.id === e.target);
-            return new GraphEdge(sourceNode, targetNode, e.attributes);
+            const sourceNode = this.nodes.find(n => n.id === e.source.id);
+            const targetNode = this.nodes.find(n => n.id === e.target.id);
+            return new GraphEdge(sourceNode, targetNode, e.attributes, e.label);
         });
     }
 
@@ -621,13 +621,17 @@ class Graph {
     }
 
 
-    clear() {
-        const doDelete = window.confirm("Do you really want to delete the whole graph?");
+    clear(message) {
+        if (this.nodes.length == 0) return true; // graph alr empty; don't ask for confirmation
+
+        const doDelete =  window.confirm(message);
         if (doDelete) {
             this.nodes = [];
             this.edges = [];
             this.update();
         }
+
+        return doDelete;
     }
 
     loadDocuments(nodes) {
@@ -747,26 +751,7 @@ function convertLiteGraphAttributesToD3Attributes(attributes) {
     return result
 }
 
-const graph = new Graph({
-    svg: d3.select("#graph"),
-    nodes: [],
-    edges: []
-})
-
-d3.select("#delete-graph").on("click", () => {
-    graph.clear();
-});
-
-d3.select("#download-input").on("click", () => {
-    saveAs(graph.toLiteGraph(), "dag-download.json");
-});
-
-
-d3.select("#upload-input").on("click", function () {
-    document.getElementById("select-file").click();
-});
-
-d3.select("#select-file").on("change", function () {
+function loadGraph() {
     var files = document.getElementById('select-file').files;
     if (files.length <= 0) {
         return false;
@@ -777,20 +762,23 @@ d3.select("#select-file").on("change", function () {
     fr.onload = function (e) {
         try {
             const result = JSON.parse(e.target.result);
-            console.log(result)
             const docs = result.documents.map(doc => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes)
-                return new GraphNode(doc.documentId, "document", doc.documentType, attributes, [100,100])
+                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
+                return new GraphNode(doc.documentId, "document", doc.documentType, attributes, [100,100], doc.label);
             })
             const entities = result.entities.map(ent => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes)
-                return new GraphNode(ent.entityId, "entity", ent.entityType, attributes, [200, 200])
+                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
+                return new GraphNode(ent.entityId, "entity", ent.entityType, attributes, [200, 200], ent.label);
             })
             const edges = result.edges.map( edge => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes)
-                return {"source": edge.documentId, "target": edge.entityId, "attributes": attributes, "label": edge.label}
+                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
+                return new GraphEdge(
+                    {id: edge.documentId, nodeType: "document", type: edge.documentType},
+                    {id: edge.entityId, nodeType: "entity", type: edge.entityType},
+                    attributes,
+                    edge.label);
                 }
-            )
+            );
             graph.loadDocuments(docs);
             graph.loadEntities(entities);
             graph.loadEdges(edges);
@@ -800,4 +788,25 @@ d3.select("#select-file").on("change", function () {
     }
 
     fr.readAsText(files.item(0));
+}
+
+const graph = new Graph({
+    svg: d3.select("#graph"),
+    nodes: [],
+    edges: []
+})
+
+d3.select("#delete-graph").on("click", () => {
+    graph.clear("Do you really want to delete the whole graph?");
 });
+
+d3.select("#download-input").on("click", () => {
+    saveAs(graph.toLiteGraph(), "dag-download.json");
+});
+
+d3.select("#select-file").on("input", function () {
+    if (graph.clear("This will clear the current graph. Continue?")) {
+        loadGraph();
+        this.value = null; // Allow repeated uploads of the same file (same name)
+    };
+})

@@ -1,5 +1,5 @@
 class GraphEdge {
-    constructor(source, target, attributes) {
+    constructor(source, target, attributes, label) {
         const document = source.nodeType === "document" ? source : target;
         const entity = source.nodeType === "entity" ? source : target;
 
@@ -7,7 +7,7 @@ class GraphEdge {
         this.source = source;
         this.target = target;
         this.type = document.type + '-' + entity.type;
-        this.label = this.type + this.id;
+        this.label = (label != "" && typeof label !== 'undefined') ? label : this.type + this.id;
         this.attributes = attributes;
     }
 }
