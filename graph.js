@@ -1,31 +1,10 @@
-class GraphNode {
-    constructor(id, nodeType, type, attributes, pos) {
-        this.id = id;
-        this.nodeType = nodeType;
-        this.type = type;
-        this.title = type + "-" + id;
-        this.x = pos[0];
-        this.y = pos[1];
-        this.attributes = attributes;
-    }
-}
-
-class GraphEdge {
-    constructor(source, target, attributes, label) {
-        this.source = source;
-        this.target = target;
-        this.attributes = attributes;
-        this.label = label
-    }
-}
-
 class Graph {
     constructor(opts) {
         this.svg = opts.svg;
         this.nodes = opts.nodes;
-        // current id == maximum id
-        this.nodeId = this.nodes.reduce((acc, curr) => {
-            return (acc > curr.id) ? acc : curr.id;
+        // generate new IDs sequentially
+        this.maxNodeId = this.nodes.reduce((acc, curr) => {
+            return Math.max(acc, curr);
         }, 0);
         this.setEdges(opts.edges)
         this.state = {
@@ -51,8 +30,7 @@ class Graph {
         this.edges = edges.map(e => {
             const sourceNode = this.nodes.find(n => n.id === e.source);
             const targetNode = this.nodes.find(n => n.id === e.target);
-            console.log(sourceNode, targetNode)
-            return new GraphEdge(sourceNode, targetNode, e.attributes, e.label)
+            return new GraphEdge(sourceNode, targetNode, e.attributes);
         });
     }
 
@@ -93,7 +71,7 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = new GraphNode(++this.nodeId, "entity", entityType, [], pos)
+                    const node = new GraphNode(++this.maxNodeId, "entity", entityType, [], pos)
                     node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
@@ -108,8 +86,7 @@ class Graph {
                     }
                     const pos = d3.pointer(event, graph.plot.node())
                     const newPos = [pos[0]-this.consts.RECT_WIDTH/2, pos[1]-this.consts.RECT_HEIGHT/2]
-                    const node = new GraphNode(++this.nodeId, "document", docType, [], newPos)
-                    node.label = node.type + "-" + node.id
+                    const node = new GraphNode(++this.maxNodeId, "document", docType, [{"key": "123", "value": "123", "type": "string"}], newPos)
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -161,8 +138,7 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { id: "", type: "", label: "", source: source, target: target, attributes: []};
-                    this.populateEdgeDefaults(newEdge);
+                    var newEdge = new GraphEdge(source, target, []);
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -386,24 +362,9 @@ class Graph {
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
-    edgeId(d) {
-        return String(d.source.id) + "+" + String(d.target.id);
-    }
-
-    // Fill edges with edge ID and default label and type
-    populateEdgeDefaults(edge) {
-        const source = edge.source;
-        const target = edge.target;
-        const document = source.nodeType === "document" ? source : target;
-        const entity = source.nodeType === "entity" ? source : target;
-        edge.id = this.edgeId(edge);
-        edge.type = document.type + '-' + entity.type;
-        edge.label = document.type + '-' + entity.type + edge.id;
-    }
-
     updateEdges() {
         this.paths.selectAll(".edge")
-            .data(this.edges, this.edgeId)
+            .data(this.edges, e => e.id)
             .join(
                 enter => {
                     const edges = enter.append("g")
@@ -425,7 +386,7 @@ class Graph {
                         });
 
                     edges.append("path")
-                        .attr("id", this.edgeId)
+                        .attr("id", e => e.id)
                         .classed("line", true)
                         .attr("d", d => {
                             return this.getPathStartAndEndPoints(d)
@@ -435,7 +396,7 @@ class Graph {
                         .attr("class", "edge-label")
                         .attr("dy", - 15)
                         .append("textPath")
-                        .attr("xlink:href", d => "#" + this.edgeId(d))
+                        .attr("xlink:href", d => "#" + d.id)
                         .attr("text-anchor", "middle")
                         .attr("startOffset", "50%")
                         .text(d => d.label);
@@ -456,7 +417,7 @@ class Graph {
 
     editEdgeLabel(d) {
         const selection = this.paths.selectAll('g').filter(dval => {
-            return this.edgeId(dval) === this.edgeId(d);
+            return dval.id === d.id;
         });
         // hide current label
         const text = selection.selectAll("text").classed("hidden", true);
@@ -663,31 +624,31 @@ class Graph {
     clear() {
         const doDelete = window.confirm("Do you really want to delete the whole graph?");
         if (doDelete) {
-            this.nodes = []
-            this.edges = []
+            this.nodes = [];
+            this.edges = [];
             this.update();
         }
     }
 
     loadDocuments(nodes) {
-        this.nodeId = nodes.reduce(function (prev, curr) {
-            return (prev.id > curr.id) ? prev.id : curr.id
+        this.maxNodeId = nodes.reduce(function (prev, curr) {
+            return Math.max(prev.id, curr.id);
         });
-        this.nodes = this.nodes.concat(nodes)
+        this.nodes = this.nodes.concat(nodes);
         this.updateNodes("document");
     }
 
     loadEntities(nodes) {
-        this.nodeId = nodes.reduce(function (prev, curr) {
-            return (prev.id > curr.id) ? prev.id : curr.id
+        this.maxNodeId = nodes.reduce(function (prev, curr) {
+            return Math.max(prev.id, curr.id);
         });
-        this.nodes = this.nodes.concat(nodes)
+        this.nodes = this.nodes.concat(nodes);
         this.updateNodes("entity");
     }
 
     loadEdges(edges) {
         this.setEdges(edges);
-        this.updateEdges()
+        this.updateEdges();
     }
 
     formatAttributes(attributes) {
