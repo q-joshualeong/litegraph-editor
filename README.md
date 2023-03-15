@@ -7,8 +7,9 @@ Adaptation of [graph-editor](https://github.com/kldtz/graph-editor) with more fe
 
 Two possible ways to run:
 ### Launching webserver
-1) To launch web server: `node src/server.js`
-2) Open browser and navigate to `localhost:8000`
+1) Run `npm install`
+2) To launch web server: `node src/server.js`
+3) Open browser and navigate to `localhost:8000`
 
 ### Opening index.html
 1) Open file explorer and click on index.html
