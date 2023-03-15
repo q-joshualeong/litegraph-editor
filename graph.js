@@ -2,9 +2,9 @@ class Graph {
     constructor(opts) {
         this.svg = opts.svg;
         this.nodes = opts.nodes;
-        // current id == maximum id
-        this.nodeId = this.nodes.reduce((acc, curr) => {
-            return (acc > curr.id) ? acc : curr.id;
+        // generate new IDs sequentially
+        this.maxNodeId = this.nodes.reduce((acc, curr) => {
+            return Math.max(acc, curr);
         }, 0);
         this.setEdges(opts.edges)
         this.state = {
@@ -30,17 +30,11 @@ class Graph {
     setEdges(edges) {
         // map source and target id to respective node
         this.edges = edges.map(e => {
-            const sourceNode = this.nodes.find(n => n.id === e.source);
-            const targetNode = this.nodes.find(n => n.id === e.target);
-            return {
-                source: sourceNode,
-                target: targetNode,
-                attributes: [],
-                label: e.label
-            }
+            const sourceNode = this.nodes.find(n => n.id === e.source.id);
+            const targetNode = this.nodes.find(n => n.id === e.target.id);
+            return new GraphEdge(sourceNode, targetNode, e.attributes, e.label);
         });
     }
-
 
     draw() {
         d3.select(window).on("keydown", (event) => {
@@ -80,7 +74,7 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "entity", "type": entityType, label: "", x: pos[0], y: pos[1], attributes: [{"key": "123", "value": "123", "type": "string"}]}
+                    const node = new GraphNode(++this.maxNodeId, "entity", entityType, [], pos)
                     node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes("entity");
@@ -94,8 +88,8 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = { id: ++this.nodeId, nodeType: "document", type: docType, label: "", x: pos[0]-this.consts.RECT_WIDTH/2, y: pos[1]-this.consts.RECT_HEIGHT/2, attributes:[{"key": "123", "value": "123", "type": "string"}, {"key": "abc", "value": "1", "type": "string"}]}
-                    node.label = node.type + "-" + node.id
+                    const newPos = [pos[0]-this.consts.RECT_WIDTH/2, pos[1]-this.consts.RECT_HEIGHT/2]
+                    const node = new GraphNode(++this.maxNodeId, "document", docType, [{"key": "123", "value": "123", "type": "string"}], newPos)
                     this.nodes.push(node);
                     this.updateNodes("document");
                 }
@@ -147,8 +141,7 @@ class Graph {
                         return !(edge.source === source && edge.target === target) &&
                             !(edge.source === target && edge.target === source);
                     });
-                    var newEdge = { id: "", type: "", label: "", source: source, target: target, attributes: []};
-                    this.populateEdgeDefaults(newEdge);
+                    var newEdge = new GraphEdge(source, target, []);
                     this.edges.push(newEdge);
                     this.updateEdges();
                 }
@@ -214,9 +207,9 @@ class Graph {
             .attr('d', 'M-20,-10L0,0L-20,10');
     }
 
-    update() {
+    update(nodeType) {
         this.updateEdges();
-        this.updateNodes();
+        this.updateNodes(nodeType);
     }
 
     updateNodes(nodeType) {
@@ -269,6 +262,7 @@ class Graph {
                 exit => exit.remove()
             );
     }
+
 
     makeEntity(nodes) {
         nodes.append("circle")
@@ -371,24 +365,9 @@ class Graph {
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
-    edgeId(d) {
-        return String(d.source.id) + "+" + String(d.target.id);
-    }
-
-    // Fill edges with edge ID and default label and type
-    populateEdgeDefaults(edge) {
-        const source = edge.source;
-        const target = edge.target;
-        const document = source.nodeType === "document" ? source : target;
-        const entity = source.nodeType === "entity" ? source : target;
-        edge.id = this.edgeId(edge);
-        edge.type = document.type + '-' + entity.type;
-        edge.label = document.type + '-' + entity.type + edge.id;
-    }
-
     updateEdges() {
         this.paths.selectAll(".edge")
-            .data(this.edges, this.edgeId)
+            .data(this.edges, e => e.id)
             .join(
                 enter => {
                     const edges = enter.append("g")
@@ -410,7 +389,7 @@ class Graph {
                         });
 
                     edges.append("path")
-                        .attr("id", this.edgeId)
+                        .attr("id", e => e.id)
                         .classed("line", true)
                         .attr("d", d => {
                             return this.getPathStartAndEndPoints(d)
@@ -420,7 +399,7 @@ class Graph {
                         .attr("class", "edge-label")
                         .attr("dy", - 15)
                         .append("textPath")
-                        .attr("xlink:href", d => "#" + this.edgeId(d))
+                        .attr("xlink:href", d => "#" + d.id)
                         .attr("text-anchor", "middle")
                         .attr("startOffset", "50%")
                         .text(d => d.label);
@@ -441,7 +420,7 @@ class Graph {
 
     editEdgeLabel(d) {
         const selection = this.paths.selectAll('g').filter(dval => {
-            return this.edgeId(dval) === this.edgeId(d);
+            return dval.id === d.id;
         });
         // hide current label
         const text = selection.selectAll("text").classed("hidden", true);
@@ -645,22 +624,38 @@ class Graph {
     }
 
 
-    clear() {
-        const doDelete = window.confirm("Do you really want to delete the whole graph?");
+    clear(message) {
+        if (this.nodes.length == 0) return true; // graph alr empty; don't ask for confirmation
+
+        const doDelete =  window.confirm(message);
         if (doDelete) {
-            this.nodes = []
-            this.edges = []
+            this.nodes = [];
+            this.edges = [];
             this.update();
         }
+
+        return doDelete;
     }
 
-    load(nodes, edges) {
-        this.nodeId = nodes.reduce(function (prev, curr) {
-            return (prev.id > curr.id) ? prev.id : curr.id
+    loadDocuments(nodes) {
+        this.maxNodeId = nodes.reduce(function (prev, curr) {
+            return Math.max(prev.id, curr.id);
         });
-        this.nodes = nodes;
+        this.nodes = this.nodes.concat(nodes);
+        this.updateNodes("document");
+    }
+
+    loadEntities(nodes) {
+        this.maxNodeId = nodes.reduce(function (prev, curr) {
+            return Math.max(prev.id, curr.id);
+        });
+        this.nodes = this.nodes.concat(nodes);
+        this.updateNodes("entity");
+    }
+
+    loadEdges(edges) {
         this.setEdges(edges);
-        this.update();
+        this.updateEdges();
     }
 
     formatAttributes(attributes) {
@@ -744,26 +739,22 @@ class Graph {
 
 /* Main */
 
-const graph = new Graph({
-    svg: d3.select("#graph"),
-    nodes: [],
-    edges: []
-})
+function convertLiteGraphAttributesToD3Attributes(attributes) {
+    const result = [];
+    // Iterate over all attribute types
+    for (const [attrType, attrObj] of Object.entries(attributes)) {
+        // Iterate over each attribute in the current type
+        for (const [key, value] of Object.entries(attrObj)) {
+            // Determine the type of the current attribute value
+            const type = attrType.replace(/Attributes$/, '') ;
+            // Construct a new object with the name, value, and type properties
+            result.push({ key: key, value: value, type: type });
+        }
+    }
+    return result
+}
 
-d3.select("#delete-graph").on("click", () => {
-    graph.clear();
-});
-
-d3.select("#download-input").on("click", () => {
-    saveAs(graph.toLiteGraph(), "dag-download.json");
-});
-
-
-d3.select("#upload-input").on("click", function () {
-    document.getElementById("select-file").click();
-});
-
-d3.select("#select-file").on("change", function () {
+function loadGraph() {
     var files = document.getElementById('select-file').files;
     if (files.length <= 0) {
         return false;
@@ -774,12 +765,51 @@ d3.select("#select-file").on("change", function () {
     fr.onload = function (e) {
         try {
             const result = JSON.parse(e.target.result);
-            graph.load(result.nodes, result.edges);
+            const docs = result.documents.map(doc => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
+                return new GraphNode(doc.documentId, "document", doc.documentType, attributes, [100,100], doc.label);
+            })
+            const entities = result.entities.map(ent => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
+                return new GraphNode(ent.entityId, "entity", ent.entityType, attributes, [200, 200], ent.label);
+            })
+            const edges = result.edges.map( edge => {
+                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
+                return new GraphEdge(
+                    {id: edge.documentId, nodeType: "document", type: edge.documentType},
+                    {id: edge.entityId, nodeType: "entity", type: edge.entityType},
+                    attributes,
+                    edge.label);
+                }
+            );
+            graph.loadDocuments(docs);
+            graph.loadEntities(entities);
+            graph.loadEdges(edges);
         } catch (err) {
             window.alert("Error loading graph from file!\nError message: " + err.message);
-            return;
         }
     }
 
     fr.readAsText(files.item(0));
+}
+
+const graph = new Graph({
+    svg: d3.select("#graph"),
+    nodes: [],
+    edges: []
+})
+
+d3.select("#delete-graph").on("click", () => {
+    graph.clear("Do you really want to delete the whole graph?");
 });
+
+d3.select("#download-input").on("click", () => {
+    saveAs(graph.toLiteGraph(), "dag-download.json");
+});
+
+d3.select("#select-file").on("input", function () {
+    if (graph.clear("This will clear the current graph. Continue?")) {
+        loadGraph();
+        this.value = null; // Allow repeated uploads of the same file (same name)
+    };
+})
