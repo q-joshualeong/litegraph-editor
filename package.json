@@ -1,0 +1,15 @@
+{
+  "name": "graph-editor",
+  "version": "1.0.0",
+  "scripts": {
+    "e2e": "jest --config ./tests/jest.config.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "jest-puppeteer": "^8.0.5",
+    "puppeteer": "^19.7.4"
+  }
+}
