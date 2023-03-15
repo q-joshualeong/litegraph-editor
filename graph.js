@@ -16,9 +16,6 @@ class Graph {
         this.consts = {
             BACKSPACE_KEY: 8,
             DELETE_KEY: 46,
-            NODE_RADIUS: 50,
-            RECT_WIDTH: 100,
-            RECT_HEIGHT: 100,
             CLICK_DISTANCE: 5,
             ENTER_KEY: 13,
             MAX_ZOOM: 5,
@@ -74,10 +71,10 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const node = new GraphNode(++this.maxNodeId, "entity", entityType, [], pos)
+                    const node = new GraphNode(++this.maxNodeId, GraphNode.nodeTypes.ENT, entityType, [], pos);
                     node.label = node.type + "-" + node.id
                     this.nodes.push(node);
-                    this.updateNodes("entity");
+                    this.updateNodes(GraphNode.nodeTypes.ENT);
                     event.stopImmediatePropagation();
                 }
 
@@ -88,10 +85,9 @@ class Graph {
                         return;
                     }
                     const pos = d3.pointer(event, graph.plot.node())
-                    const newPos = [pos[0]-this.consts.RECT_WIDTH/2, pos[1]-this.consts.RECT_HEIGHT/2]
-                    const node = new GraphNode(++this.maxNodeId, "document", docType, [{"key": "123", "value": "123", "type": "string"}], newPos)
+                    const node = new GraphNode(++this.maxNodeId, GraphNode.nodeTypes.DOC, docType, [{"key": "123", "value": "123", "type": "string"}], pos);
                     this.nodes.push(node);
-                    this.updateNodes("document");
+                    this.updateNodes(GraphNode.nodeTypes.DOC);
                 }
             })
             .on('click', () => {
@@ -113,7 +109,7 @@ class Graph {
                 if (graph.state.shiftNodeDrag) {
                     const pos = d3.pointer(event, graph.plot.node());
                     // make line start from center of square when dragging a new edge
-                    const lineStartPos = d.nodeType == "document" ? [d.x + graph.consts.RECT_WIDTH / 2, d.y + graph.consts.RECT_HEIGHT / 2] : [d.x, d.y];
+                    const lineStartPos = d.nodeType == GraphNode.nodeTypes.DOC ? [d.x + GraphNode.consts.RECT_WIDTH / 2, d.y + GraphNode.consts.RECT_HEIGHT / 2] : [d.x, d.y];
                     graph.dragLine.attr('d', 'M' + lineStartPos[0] + ',' + lineStartPos[1] + 'L' + pos[0] + ',' + pos[1]);
                     graph.dragLine.classed('hidden', false);
                 } else {
@@ -175,7 +171,7 @@ class Graph {
             .attr('markerWidth', 20)
             .attr('markerHeight', 20)
             // tip of marker at circle (cut off part of tip that is thinner than line)
-            .attr('refX', this.consts.NODE_RADIUS - 3)
+            .attr('refX', GraphNode.consts.NODE_RADIUS - 3)
             .attr('orient', 'auto')
             .append('path')
             .attr('d', 'M-20,-10L0,0L-20,10');
@@ -188,7 +184,7 @@ class Graph {
             .attr('markerWidth', 20)
             .attr('markerHeight', 20)
             // tip of marker at circle (cut off part of tip that is thinner than line)
-            .attr('refX', this.consts.NODE_RADIUS - 3)
+            .attr('refX', GraphNode.consts.NODE_RADIUS - 3)
             .attr('orient', 'auto')
             .append('path')
             .attr('d', 'M-20,-10L0,0L-20,10');
@@ -232,23 +228,23 @@ class Graph {
                         .on("click", (event, d) => {
                             event.stopPropagation();
                             if (event.shiftKey) {
-                                this.editNodeLabel(d, nodeType);
+                                d.editNodeLabel(this.circles, this.plot);
                             } else {
                                 this.state.selectedNode = d;
                                 this.state.selectedEdge = null;
-                                this.showAttributeData(d);
-                                this.showNodeData(d);
+                                this.showAttributes(d);
+                                this.showData(d);
                                 this.update();
                             }
                         })
                         .call(this.drag);
 
-                    if (nodeType==="entity") {
-                        this.makeEntity(nodes)
+                    if (nodeType===GraphNode.nodeTypes.ENT) {
+                        GraphNode.makeEntity(nodes);
                     }
 
-                    if (nodeType==="document") {
-                        this.makeDocument(nodes)
+                    if (nodeType===GraphNode.nodeTypes.DOC) {
+                        GraphNode.makeDocument(nodes);
                     }
 
                 },
@@ -263,108 +259,6 @@ class Graph {
             );
     }
 
-
-    makeEntity(nodes) {
-        nodes.append("circle")
-            .attr("r", String(this.consts.NODE_RADIUS));
-        nodes.append("text")
-            .text(d => { return d.label; });
-    }
-
-    makeDocument(nodes) {
-        nodes.append("rect")
-            .attr("width", this.consts.RECT_WIDTH)
-            .attr("height", this.consts.RECT_HEIGHT);
-
-        nodes.append("text")
-            .attr("dx", this.consts.RECT_WIDTH/2)
-            .attr("dy", this.consts.RECT_HEIGHT/2)
-            .text(d => { return d.label; });
-    }
-
-    editNodeLabel(d, nodeType) {
-        const selection = this.circles.selectAll('g').filter(function (dval) {
-            return dval.id === d.id;
-        });
-        // hide current label
-        const text = selection.selectAll("text").classed("hidden", true);
-        // add intermediate editable paragraph
-        if (nodeType==="entity") {
-            const d3txt = this.plot.selectAll("foreignObject")
-                .data([d])
-                .enter()
-                .append("foreignObject")
-                .attr("x", d.x - this.consts.NODE_RADIUS)
-                .attr("y", d.y - this.consts.NODE_RADIUS/2)
-                .attr("height", 2 * this.consts.NODE_RADIUS)
-                .attr("width", 2 * this.consts.NODE_RADIUS)
-                .append("xhtml:div")
-                .attr("id", "editable-p")
-                .attr("contentEditable", "true")
-                .style("text-align", "center")
-                //.style("border", "1px solid")
-                .text(d.label)
-                .on("mousedown", (event, d) => {
-                    event.stopPropagation();
-                })
-                .on("keydown", (event, d) => {
-                    event.stopPropagation();
-                    if (event.keyCode == this.consts.ENTER_KEY) {
-                        event.target.blur();
-                    }
-                })
-                .on("blur", (event, d) => {
-                    d.label = event.target.textContent;
-                    d3.select(event.target.parentElement).remove();
-                    this.updateNodes();
-                    text.classed("hidden", false);
-                });
-            d3txt.node().focus();
-        }
-
-        if (nodeType==="document") {
-            const d3txt = this.plot.selectAll("foreignObject")
-                .data([d])
-                .enter()
-                .append("foreignObject")
-                .attr("x", d.x - this.consts.RECT_WIDTH/2)
-                .attr("y", d.y + this.consts.RECT_HEIGHT/4)
-                .attr("height", 2 * this.consts.RECT_HEIGHT)
-                .attr("width", 2 * this.consts.RECT_WIDTH)
-                .append("xhtml:div")
-                .attr("id", "editable-p")
-                .attr("contentEditable", "true")
-                .style("text-align", "center")
-                //.style("border", "1px solid")
-                .text(d.label)
-                .on("mousedown", (event, d) => {
-                    event.stopPropagation();
-                })
-                .on("keydown", (event, d) => {
-                    event.stopPropagation();
-                    if (event.keyCode == this.consts.ENTER_KEY) {
-                        event.target.blur();
-                    }
-                })
-                .on("blur", (event, d) => {
-                    d.label = event.target.textContent;
-                    d3.select(event.target.parentElement).remove();
-                    this.updateNodes();
-                    text.classed("hidden", false);
-                });
-            d3txt.node().focus();
-        }
-
-    }
-
-    getPathStartAndEndPoints(d) {
-        const sourceX = d.source.nodeType === "document" ? d.source.x + this.consts.RECT_WIDTH/2 : d.source.x;
-        const sourceY = d.source.nodeType === "document" ? d.source.y + this.consts.RECT_HEIGHT/2 : d.source.y;
-        const targetX = d.target.nodeType === "document" ? d.target.x + this.consts.RECT_WIDTH/2 : d.target.x;
-        const targetY = d.target.nodeType === "document" ? d.target.y + this.consts.RECT_HEIGHT/2 : d.target.y;
-        return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
-    }
-
     updateEdges() {
         this.paths.selectAll(".edge")
             .data(this.edges, e => e.id)
@@ -375,12 +269,12 @@ class Graph {
                         .on("click", (event, d) => {
                             event.stopPropagation();
                             if (event.shiftKey) {
-                                this.editEdgeLabel(d);
+                                d.editEdgeLabel(this.paths, this.plot);
                             } else {
                                 this.state.selectedEdge = d;
                                 this.state.selectedNode = null;
-                                this.showAttributeData(d);
-                                this.showNodeData(d);
+                                this.showAttributes(d);
+                                this.showData(d);
                                 this.update();
                             }
                         })
@@ -388,28 +282,14 @@ class Graph {
                             event.stopPropagation();
                         });
 
-                    edges.append("path")
-                        .attr("id", e => e.id)
-                        .classed("line", true)
-                        .attr("d", d => {
-                            return this.getPathStartAndEndPoints(d)
-                        });
-
-                    edges.append("text")
-                        .attr("class", "edge-label")
-                        .attr("dy", - 15)
-                        .append("textPath")
-                        .attr("xlink:href", d => "#" + d.id)
-                        .attr("text-anchor", "middle")
-                        .attr("startOffset", "50%")
-                        .text(d => d.label);
+                    GraphEdge.makeEdge(edges);
                 },
                 update => {
                     update.classed("selected", d => { return d === this.state.selectedEdge; });
 
                     update.select("path")
                         .attr("d", d => {
-                            return this.getPathStartAndEndPoints(d)
+                            return d.getPathStartAndEndPoints();
                         });
 
                     update.select("text").select("textPath").text(d => d.label);
@@ -418,48 +298,7 @@ class Graph {
             );
     }
 
-    editEdgeLabel(d) {
-        const selection = this.paths.selectAll('g').filter(dval => {
-            return dval.id === d.id;
-        });
-        // hide current label
-        const text = selection.selectAll("text").classed("hidden", true);
-        // add intermediate editable paragraph
-        const d3txt = this.plot.selectAll("foreignObject")
-            .data([d])
-            .enter()
-            .append("foreignObject")
-            // TODO: rotate via transform: rotate(20deg);
-            .attr("x", d.target.x - (d.target.x - d.source.x) / 2)
-            .attr("y", d.target.y - (d.target.y - d.source.y) / 2)
-            .attr("height", 100)
-            .attr("width", 100)
-            .append("xhtml:div")
-            //.style("transform", "rotate(20deg)")
-            .attr("id", "editable-p")
-            .attr("contentEditable", "true")
-            .style("text-align", "center")
-            //.style("border", "1px solid")
-            .text(d.label)
-            .on("mousedown", (event, d) => {
-                event.stopPropagation();
-            })
-            .on("keydown", (event, d) => {
-                event.stopPropagation();
-                if (event.keyCode == this.consts.ENTER_KEY) {
-                    event.target.blur();
-                }
-            })
-            .on("blur", (event, d) => {
-                d.label = event.target.textContent;
-                d3.select(event.target.parentElement).remove();
-                this.updateEdges();
-                text.classed("hidden", false);
-            });
-        d3txt.node().focus();
-    }
-
-    showNodeData(nodeOrEdge) {
+    showData(nodeOrEdge) {
         function refreshTable() {
             // Remove the old table if it exists
             d3.select('#node-data').selectAll('*').remove();
@@ -492,8 +331,7 @@ class Graph {
         refreshTable();
     }
 
-    // Define the function to show node data
-    showAttributeData(nodeOrEdge) {
+    showAttributes(nodeOrEdge) {
         function inputIsValid(key, val, type) {
             if (!key || !val || !type) return false;
             switch (type) {
@@ -623,7 +461,6 @@ class Graph {
         refreshTable();
     }
 
-
     clear(message) {
         if (this.nodes.length == 0) return true; // graph alr empty; don't ask for confirmation
 
@@ -642,7 +479,7 @@ class Graph {
             return Math.max(prev.id, curr.id);
         });
         this.nodes = this.nodes.concat(nodes);
-        this.updateNodes("document");
+        this.updateNodes(GraphNode.nodeTypes.DOC);
     }
 
     loadEntities(nodes) {
@@ -650,7 +487,7 @@ class Graph {
             return Math.max(prev.id, curr.id);
         });
         this.nodes = this.nodes.concat(nodes);
-        this.updateNodes("entity");
+        this.updateNodes(GraphNode.nodeTypes.ENT);
     }
 
     loadEdges(edges) {
@@ -692,8 +529,8 @@ class Graph {
 
     toLiteGraph() {
         const saveEdges = this.edges.map(edge => {
-            const document = edge.source.nodeType === "document" ? edge.source : edge.target;
-            const entity = edge.source.nodeType === "entity" ? edge.source : edge.target;
+            const document = edge.source.nodeType === GraphNode.nodeTypes.DOC ? edge.source : edge.target;
+            const entity = edge.source.nodeType === GraphNode.nodeTypes.ENT ? edge.source : edge.target;
             return {
                 edgeId: edge.id,
                 edgeType: edge.type,
@@ -706,7 +543,7 @@ class Graph {
             };
         });
         const documentsAndEntities = this.nodes.reduce((acc, node) => {
-            if (node.nodeType === "document") {
+            if (node.nodeType === GraphNode.nodeTypes.DOC) {
                 const doc = {
                     documentId: node.id,
                     documentType: node.type,
@@ -714,7 +551,7 @@ class Graph {
                     attributes: this.formatAttributes(node.attributes)
                 };
                 acc.documents.push(doc);
-            } else if (node.nodeType === "entity") {
+            } else if (node.nodeType === GraphNode.nodeTypes.ENT) {
                 const ent = {
                     entityId: node.id,
                     entityType: node.type,
@@ -767,17 +604,17 @@ function loadGraph() {
             const result = JSON.parse(e.target.result);
             const docs = result.documents.map(doc => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
-                return new GraphNode(doc.documentId, "document", doc.documentType, attributes, [100,100], doc.label);
+                return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.label);
             })
             const entities = result.entities.map(ent => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
-                return new GraphNode(ent.entityId, "entity", ent.entityType, attributes, [200, 200], ent.label);
+                return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.label);
             })
             const edges = result.edges.map( edge => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
                 return new GraphEdge(
-                    {id: edge.documentId, nodeType: "document", type: edge.documentType},
-                    {id: edge.entityId, nodeType: "entity", type: edge.entityType},
+                    {id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType},
+                    {id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType},
                     attributes,
                     edge.label);
                 }
