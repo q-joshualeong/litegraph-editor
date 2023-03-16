@@ -36,32 +36,4 @@ class GraphEdge {
             .attr("startOffset", "50%")
             .text(e => e.label);
     }
-
-    editEdgeLabel(paths, plot) {
-        const selection = paths.selectAll('g').filter(dval => {
-            return dval.id === this.id;
-        });
-        // hide current label
-        const text = selection.selectAll("text").classed("hidden", true);
-        // add intermediate editable paragraph
-        const d3txt = plot.selectAll("foreignObject")
-            .data([this])
-            .enter()
-            .append("foreignObject")
-            // TODO: rotate via transform: rotate(20deg);
-            .attr("x", this.target.x - (this.target.x - this.source.x) / 2)
-            .attr("y", this.target.y - (this.target.y - this.source.y) / 2)
-            .attr("height", 100)
-            .attr("width", 100)
-            .append("xhtml:div")
-            //.style("transform", "rotate(20deg)")
-            .attr("id", "editable-p")
-            .attr("contentEditable", "true")
-            .style("text-align", "center")
-            .text(this.label)
-            .on("mousedown", (event, d) => {
-                event.stopPropagation();
-            });
-        d3txt.node().focus();
-    }
 }

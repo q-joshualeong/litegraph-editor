@@ -226,15 +226,11 @@ class Graph {
                         .on("mouseout", () => { this.state.mouseOverNode = null; })
                         .on("click", (event, d) => {
                             event.stopPropagation();
-                            if (event.shiftKey) {
-                                d.editNodeLabel(this.circles, this.plot);
-                            } else {
-                                this.state.selectedNode = d;
-                                this.state.selectedEdge = null;
-                                this.showAttributes(d);
-                                this.showData(d);
-                                this.update();
-                            }
+                            this.state.selectedNode = d;
+                            this.state.selectedEdge = null;
+                            this.showAttributes(d);
+                            this.showData(d);
+                            this.update();
                         })
                         .call(this.drag);
 
@@ -259,6 +255,7 @@ class Graph {
     }
 
     updateEdges() {
+        // TODO: rotate label 180deg when it's upside down using smth like .style("transform", "rotate(180deg)")
         this.paths.selectAll(".edge")
             .data(this.edges, e => e.id)
             .join(
@@ -267,15 +264,11 @@ class Graph {
                         .classed("edge", true)
                         .on("click", (event, d) => {
                             event.stopPropagation();
-                            if (event.shiftKey) {
-                                d.editEdgeLabel(this.paths, this.plot);
-                            } else {
-                                this.state.selectedEdge = d;
-                                this.state.selectedNode = null;
-                                this.showAttributes(d);
-                                this.showData(d);
-                                this.update();
-                            }
+                            this.state.selectedEdge = d;
+                            this.state.selectedNode = null;
+                            this.showAttributes(d);
+                            this.showData(d);
+                            this.update();
                         })
                         .on("mousedown", (event, d) => {
                             event.stopPropagation();
