@@ -25,7 +25,7 @@ class GraphNode {
             .attr("r", String(this.consts.NODE_RADIUS));
 
         nodes.append("text")
-            .text(d => { return d.label; });
+            .text(d => { return d.type; });
     }
 
     static makeDocument(nodes) {
@@ -36,7 +36,7 @@ class GraphNode {
         nodes.append("text")
             .attr("dx", this.consts.RECT_WIDTH/2)
             .attr("dy", this.consts.RECT_HEIGHT/2)
-            .text(d => { return d.label; });
+            .text(d => { return d.type; });
     }
 
     editNodeLabel(circles, plot) {

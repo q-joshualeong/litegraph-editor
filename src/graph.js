@@ -72,7 +72,6 @@ class Graph {
                     }
                     const pos = d3.pointer(event, graph.plot.node())
                     const node = new GraphNode(++this.maxNodeId, GraphNode.nodeTypes.ENT, entityType, [], pos);
-                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes(GraphNode.nodeTypes.ENT);
                     event.stopImmediatePropagation();
@@ -253,7 +252,7 @@ class Graph {
                         .classed("selected", d => { return d === this.state.selectedNode; });
 
                     update.select("text")
-                        .text(d => { return d.label; });
+                        .text(d => { return d.type; });
                 },
                 exit => exit.remove()
             );
