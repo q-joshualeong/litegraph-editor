@@ -89,6 +89,10 @@ path.line {
     stroke: var(--edge-color);
 }
 
+.edge > text {
+    fill: var(--node-text-color);
+}
+
 .edge.selected > path {
     stroke: var(--selected-color);
     filter: var(--selected-drop-shadow);
