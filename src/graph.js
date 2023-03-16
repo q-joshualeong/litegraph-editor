@@ -307,12 +307,12 @@ class Graph {
                 .classed("node-data-table", true)
                 .append('tbody');
 
-            // Add a row for the node id
+            // Add a row for the id
             const idRow = table.append("tr")
             idRow.append("td").text("ID:")
             idRow.append("td").text(nodeOrEdge.id);
 
-            // Add a row for the node type
+            // Add a row for the type
             const typeRow = table.append("tr");
             typeRow.append("td").text("Type:");
             typeRow.append("td").append("input")
@@ -320,6 +320,16 @@ class Graph {
                 .attr("value", nodeOrEdge.type)
                 .on("input", function() {
                     nodeOrEdge.type = this.value;
+                });
+
+            // Add a row for the label
+            const labelRow = table.append("tr");
+            labelRow.append("td").text("Label:");
+            labelRow.append("td").append("input")
+                .attr("type", "text")
+                .attr("value", nodeOrEdge.label)
+                .on("input", function() {
+                    nodeOrEdge.label = this.value;
                 });
 
             // Show the table in the node data element
