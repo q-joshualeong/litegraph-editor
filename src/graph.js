@@ -374,17 +374,11 @@ class Graph {
 
             attributeRows.each(function(d) {
                 const row = d3.select(this);
-                const attributeIndex = d[0]
-                const rowData = d[1]
+                const attributeIndex = d[0];
+                const rowData = d[1];
                 row.append('td').text(rowData.key);
-                row.append('td').attr('contentEditable', true).text(rowData.value)
-                    .on('input', function() {
-                        nodeOrEdge.attributes[d[0]].value = this.innerText;
-                    });
-                row.append('td').attr('contentEditable', true).text(rowData.type)
-                    .on('input', function() {
-                        nodeOrEdge.attributes[d[0]].type = this.innerText;
-                    });
+                row.append('td').text(rowData.value);
+                row.append('td').text(rowData.type);
                 row.append('td').append('button').text('x')
                     .on('click', () => {
                         delete nodeOrEdge.attributes[d[0]];
