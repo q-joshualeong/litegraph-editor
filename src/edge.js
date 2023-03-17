@@ -28,9 +28,9 @@ class GraphEdge {
             });
 
         edges.append("text")
-            .attr("class", "edge-label")
             .attr("dy", - 15)
             .append("textPath")
+            .attr("id", e => "label-" + e.id)
             .attr("xlink:href", e => "#" + e.id)
             .attr("text-anchor", "middle")
             .attr("startOffset", "50%")

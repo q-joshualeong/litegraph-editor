@@ -308,21 +308,29 @@ class Graph {
             // Add a row for the type
             const typeRow = table.append("tr");
             typeRow.append("td").text("Type:");
-            typeRow.append("td").append("input")
-                .attr("type", "text")
-                .attr("value", nodeOrEdge.type)
-                .on("input", function() {
-                    nodeOrEdge.type = this.value;
-                });
+            if (typeof nodeOrEdge.nodeType === 'undefined') // is edge
+                typeRow.append("td").text(nodeOrEdge.type); // do not allow modification
+            else {
+                let nodeType = document.getElementById("type-" + nodeOrEdge.id);
+                typeRow.append("td").append("input")
+                    .attr("type", "text")
+                    .attr("value", nodeOrEdge.type)
+                    .on("input", function() {
+                        nodeOrEdge.type = this.value;
+                        nodeType.textContent = this.value;
+                    });
+            }
 
             // Add a row for the label
             const labelRow = table.append("tr");
             labelRow.append("td").text("Label:");
+            let nodeOrEdgeLabel = document.getElementById("label-" + nodeOrEdge.id);
             labelRow.append("td").append("input")
                 .attr("type", "text")
                 .attr("value", nodeOrEdge.label)
                 .on("input", function() {
                     nodeOrEdge.label = this.value;
+                    nodeOrEdgeLabel.textContent = this.value;
                 });
 
             // Show the table in the node data element

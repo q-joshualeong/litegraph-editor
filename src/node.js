@@ -3,7 +3,7 @@ class GraphNode {
         NODE_RADIUS: 50,
         RECT_WIDTH: 100,
         RECT_HEIGHT: 100,
-        LABEL_FONT_SIZE: 16
+        LABEL_FONT_SIZE: 22
     }
 
     static nodeTypes = {
@@ -26,11 +26,11 @@ class GraphNode {
             .attr("r", String(this.consts.NODE_RADIUS));
 
         nodes.append("text")
-            .attr("class", "node-type")
+            .attr("id", d => "type-" + d.id)
             .text(d => { return d.type; });
 
         nodes.append("text")
-            .attr("class", "node-label")
+            .attr("id", d => "label-" + d.id)
             .attr("dy", this.consts.NODE_RADIUS + this.consts.LABEL_FONT_SIZE)
             .style("font-size", this.consts.LABEL_FONT_SIZE + "px")
             .text(d => d.label);
@@ -42,12 +42,13 @@ class GraphNode {
             .attr("height", this.consts.RECT_HEIGHT);
 
         nodes.append("text")
+            .attr("id", d => "type-" + d.id)
             .attr("dx", this.consts.RECT_WIDTH/2)
             .attr("dy", this.consts.RECT_HEIGHT/2)
             .text(d => { return d.type; });
 
         nodes.append("text")
-            .attr("class", "node-label")
+            .attr("id", d => "label-" + d.id)
             .attr("dx", this.consts.RECT_WIDTH/2)
             .attr("dy", this.consts.RECT_HEIGHT + this.consts.LABEL_FONT_SIZE)
             .style("text-align", "center")
