@@ -538,7 +538,7 @@ class Graph {
             const entity = edge.source.nodeType === GraphNode.nodeTypes.ENT ? edge.source : edge.target;
             return {
                 edgeId: edge.id,
-                edgeType: edge.type,
+                edgeType: edge.generateType(),
                 label: edge.label,
                 documentId: document.id,
                 documentType: document.type,
