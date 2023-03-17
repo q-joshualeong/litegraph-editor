@@ -1,12 +1,9 @@
 class GraphEdge {
     constructor(source, target, attributes, label) {
-        const document = source.nodeType === GraphNode.nodeTypes.DOC ? source : target;
-        const entity = source.nodeType === GraphNode.nodeTypes.ENT ? source : target;
-
         this.id = String(source.id) + "+" + String(target.id);
         this.source = source;
         this.target = target;
-        this.type = document.type + '-' + entity.type;
+        this.type = this.generateType();
         this.label = (label != "" && typeof label !== 'undefined') ? label : this.type + this.id;
         this.attributes = attributes;
     }
@@ -17,6 +14,12 @@ class GraphEdge {
         const targetX = this.target.nodeType === GraphNode.nodeTypes.DOC ? this.target.x + GraphNode.consts.RECT_WIDTH/2 : this.target.x;
         const targetY = this.target.nodeType === GraphNode.nodeTypes.DOC ? this.target.y + GraphNode.consts.RECT_HEIGHT/2 : this.target.y;
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
+    }
+
+    generateType() {
+        const document = this.source.nodeType === GraphNode.nodeTypes.DOC ? this.source : this.target;
+        const entity = this.source.nodeType === GraphNode.nodeTypes.ENT ? this.source : this.target;
+        return document.type + '-' + entity.type;
     }
 
     static makeEdge(edges) {

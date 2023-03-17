@@ -308,9 +308,10 @@ class Graph {
             // Add a row for the type
             const typeRow = table.append("tr");
             typeRow.append("td").text("Type:");
-            if (typeof nodeOrEdge.nodeType === 'undefined') // is edge
-                typeRow.append("td").text(nodeOrEdge.type); // do not allow modification
-            else {
+            if (typeof nodeOrEdge.nodeType === 'undefined') { // is edge
+                nodeOrEdge.type = nodeOrEdge.generateType(); // auto update based on doc and ent types
+                typeRow.append("td").text(nodeOrEdge.type); // do not allow manual modification
+            } else {
                 let nodeType = document.getElementById("type-" + nodeOrEdge.id);
                 typeRow.append("td").append("input")
                     .attr("type", "text")
