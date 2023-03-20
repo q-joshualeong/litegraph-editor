@@ -604,11 +604,11 @@ function loadGraph() {
             const result = JSON.parse(e.target.result);
             const docs = result.documents.map(doc => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
-                return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.label);
+                return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [400, 400], doc.label);
             })
             const entities = result.entities.map(ent => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
-                return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.label);
+                return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [500, 500], ent.label);
             })
             const edges = result.edges.map( edge => {
                 const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
@@ -619,6 +619,10 @@ function loadGraph() {
                     edge.label);
                 }
             );
+
+            const sim = new Simulation(docs, entities, edges);
+            sim.startSim();
+
             graph.loadDocuments(docs);
             graph.loadEntities(entities);
             graph.loadEdges(edges);
