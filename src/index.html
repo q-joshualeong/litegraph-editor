@@ -26,11 +26,26 @@
 </figure>
 <div id="node-data"></div>
 <div id="node-attribute-data"></div>
-<div id="util-buttons">
-    <input type="button" id="download-input" value="Download" control-id="ControlID-1">
+<div id="util-buttons" class="button-container">
+    <div id="download-button-container">
+    <input type="button" id="download-button" value="Download" control-id="ControlID-1">
+    <select id="download-format-select">
+        <option value="filetype">File Format:</option>
+        <option value="JSON">JSON</option>
+        <option value="CSV">CSV</option>
+    </select>
+    </div>
     <input type="button" id="delete-graph" value="Delete" control-id="ControlID-2">
-    <input type="file" id="select-file" control-id="ControlID-3">
-    <input type="button" value="Upload" onclick="document.getElementById('select-file').click();" />
+    <div id="upload-button-container">
+    <input type="button" id="upload-button" value="Upload" control-id="ControlID-3">
+    <select id="upload-format-select">
+        <option value="filetype">File Format:</option>
+        <option value="JSON">JSON</option>
+        <option value="CSV">CSV</option>
+    </select>
+    </div>
+    <input type="file" id="select-file" accept=".json" style="display: none;">
+    <input type="file" id="select-csv-files" accept=".csv" multiple style="display: none;">
     <button onclick="toggleTheme()">Toggle Light/Dark</button>
 </div>
 <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -40,5 +55,4 @@
 <script src="../lib/FileSaver.min.js"></script>
 <script src="toggleTheme.js"></script>
 </body>
-
 </html>

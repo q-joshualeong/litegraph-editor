@@ -145,3 +145,36 @@ input[type=file] {
 button:hover, input[type=button]:hover {
     background-color: #e0e5e9;
 }
+
+#download-button-container {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#download-format-select {
+  display: none;
+}
+
+#download-input:hover + #download-format-select,
+#download-format-select:hover {
+  display: block;
+}
+
+#upload-button-container {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#upload-format-select {
+  display: none;
+}
+
+#upload-input:hover + #upload-format-select,
+#upload-format-select:hover {
+  display: block;
+}
+
+.button-container {
+  display: inline-block;
+  gap: 10px;
+}
