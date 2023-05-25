@@ -475,17 +475,25 @@ class Graph {
     }
 
     loadDocuments(nodes) {
-        this.maxNodeId = nodes.reduce(function (prev, curr) {
+        if (nodes.length === 1) {
+            this.maxNodeId = nodes[0].id;
+        } else {
+          this.maxNodeId = nodes.reduce(function (prev, curr) {
             return Math.max(prev.id, curr.id);
-        });
+          });
+        }
         this.nodes = this.nodes.concat(nodes);
         this.updateNodes(GraphNode.nodeTypes.DOC);
     }
 
     loadEntities(nodes) {
-        this.maxNodeId = nodes.reduce(function (prev, curr) {
+        if (nodes.length === 1) {
+            this.maxNodeId = nodes[0].id;
+        } else {
+          this.maxNodeId = nodes.reduce(function (prev, curr) {
             return Math.max(prev.id, curr.id);
-        });
+          });
+        }
         this.nodes = this.nodes.concat(nodes);
         this.updateNodes(GraphNode.nodeTypes.ENT);
     }
@@ -591,43 +599,46 @@ function convertLiteGraphAttributesToD3Attributes(attributes) {
     return result
 }
 
-function loadGraph() {
-    var files = document.getElementById('select-file').files;
-    if (files.length <= 0) {
-        return false;
-    }
+function loadGraph(files, fileType) {
 
     var fr = new FileReader();
 
     fr.onload = function (e) {
-        try {
-            const result = JSON.parse(e.target.result);
-            const docs = result.documents.map(doc => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
-                return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.label);
-            })
-            const entities = result.entities.map(ent => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
-                return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.label);
-            })
-            const edges = result.edges.map( edge => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
-                return new GraphEdge(
-                    {id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType},
-                    {id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType},
-                    attributes,
-                    edge.label);
-                }
-            );
-            graph.loadDocuments(docs);
-            graph.loadEntities(entities);
-            graph.loadEdges(edges);
-        } catch (err) {
-            window.alert("Error loading graph from file!\nError message: " + err.message);
-        }
-    }
+      try {
+          const result = JSON.parse(e.target.result);
+          const docs = result.documents.map(doc => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
+              return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.documentType + "-" + doc.documentId);
+          })
+          const entities = result.entities.map(ent => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
+              return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.entityType + "-" + ent.entityId);
+          })
+          const edges = result.edges.map( edge => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
+              return new GraphEdge(
+                  {id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType},
+                  {id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType},
+                  attributes,
+                  edge.label);
+              }
+          );
+          graph.loadDocuments(docs);
+          graph.loadEntities(entities);
+          graph.loadEdges(edges);
+      } catch (err) {
+          window.alert("Error loading graph from file!\nError message: " + err.message);
+      }
+  }
+  if (fileType === "CSV") {
+    fr.readAsText(files);
+  } else if (fileType === "JSON") {
     fr.readAsText(files.item(0));
+  } else {
+    console.log("Invalid file format entered.");
+  }
 }
+
 
 const graph = new Graph({
     svg: d3.select("#graph"),
@@ -670,14 +681,14 @@ downloadFormat.addEventListener("change", function () {
   const selectedFileType = downloadFormat.value;
   downloadAs(selectedFileType);
   downloadFormat.style.display = "none";
-  downloadFormat.value = "Select Format:";
+  downloadFormat.value = "default";
 });
 
 uploadFormat.addEventListener("change", function () {
   const selectedFileType = uploadFormat.value;
   uploadAs(selectedFileType);
   uploadFormat.style.display = "none";
-  uploadFormat.value = "Select Format:";
+  uploadFormat.value = "default";
 });
 
 function downloadAs(fileType) {
@@ -764,10 +775,6 @@ function convertToCSV(data) {
   return csvData;
 }
 
-let documentsData = [];
-let entitiesData = [];
-let edgesData = [];
-
 function selectCSVFiles() {
   const promptMessage = "Select the Document, Entities, and Edges CSV files.";
   const confirmed = window.confirm(promptMessage);
@@ -805,6 +812,10 @@ function parseFile(file) {
 }
 
 function handleCSVFiles(filesData) {
+  let documentsData = [];
+  let entitiesData = [];
+  let edgesData = [];
+
   filesData.forEach(function (fileData) {
     const fileName = fileData.fileName.toLowerCase();
     const data = fileData.data;
@@ -818,14 +829,13 @@ function handleCSVFiles(filesData) {
     }
   });
 
-  // Combine the data from all three files
-  if (documentsData.length > 0 && entitiesData.length > 0 && edgesData.length > 0) {
-    combineData(documentsData, entitiesData, edgesData);
-  }
+  combineData(documentsData, entitiesData, edgesData);
 }
 
 function combineData(documentsData, entitiesData, edgesData) {
-  entitiesData[0].records = []; // adds tne empty entity records array
+  if (entitiesData.length > 0) {
+      entitiesData[0].records = []; // adds the empty entity records array
+  }
   const jsonStr = new window.Blob([window.JSON.stringify(
                                   {
                                       documents: documentsData,
@@ -833,51 +843,16 @@ function combineData(documentsData, entitiesData, edgesData) {
                                       edges: edgesData
                                   }
                                   , null, 2)], { type: "text/plain;charset=utf-8" })
-  loadCombinedData(jsonStr)
-}
-
-function loadCombinedData(blob) {
-  const fr = new FileReader();
-
-  fr.onload = function (e) {
-    try {
-      const result = JSON.parse(e.target.result);
-      const docs = result.documents.map(doc => {
-        const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
-        return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100, 100], doc.label);
-      });
-      const entities = result.entities.map(ent => {
-        const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
-        return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.label);
-      });
-      const edges = result.edges.map(edge => {
-        const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
-        return new GraphEdge(
-          { id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType },
-          { id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType },
-          attributes,
-          edge.label
-        );
-      });
-      graph.loadDocuments(docs);
-      graph.loadEntities(entities);
-      graph.loadEdges(edges);
-    } catch (err) {
-      window.alert("Error loading graph from file!\nError message: " + err.message);
-    }
-  };
-
-  fr.readAsText(blob);
+  loadGraph(jsonStr, "CSV")
 }
 
 function uploadAs(fileType) {
-  if (fileType === "JSON") {
-    d3.select("#select-file").node().click();
-    d3.select("#select-file").on("change", function () {
-      if (graph.clear("This will clear the current graph. Continue?")) {
-        loadGraph();
-        this.value = null; // Allow repeated uploads of the same file (same name)
-      }
+  if (fileType === "JSON" && graph.clear("This will clear the current graph. Continue?")) {
+    d3.select("#select-json-file").node().click();
+    d3.select("#select-json-file").on("change", function () {
+      var files = document.getElementById('select-json-file').files;
+      loadGraph(files, fileType);
+      this.value = null; // Allow repeated uploads of the same file (same name)
     });
   } else if (fileType === "CSV" && graph.clear("This will clear the current graph. Continue?")) {
     selectCSVFiles();
