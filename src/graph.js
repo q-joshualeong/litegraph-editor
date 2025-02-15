@@ -72,7 +72,6 @@ class Graph {
                     }
                     const pos = d3.pointer(event, graph.plot.node())
                     const node = new GraphNode(++this.maxNodeId, GraphNode.nodeTypes.ENT, entityType, [], pos);
-                    node.label = node.type + "-" + node.id
                     this.nodes.push(node);
                     this.updateNodes(GraphNode.nodeTypes.ENT);
                     event.stopImmediatePropagation();
@@ -227,15 +226,11 @@ class Graph {
                         .on("mouseout", () => { this.state.mouseOverNode = null; })
                         .on("click", (event, d) => {
                             event.stopPropagation();
-                            if (event.shiftKey) {
-                                d.editNodeLabel(this.circles, this.plot);
-                            } else {
-                                this.state.selectedNode = d;
-                                this.state.selectedEdge = null;
-                                this.showAttributes(d);
-                                this.showData(d);
-                                this.update();
-                            }
+                            this.state.selectedNode = d;
+                            this.state.selectedEdge = null;
+                            this.showAttributes(d);
+                            this.showData(d);
+                            this.update();
                         })
                         .call(this.drag);
 
@@ -253,13 +248,14 @@ class Graph {
                         .classed("selected", d => { return d === this.state.selectedNode; });
 
                     update.select("text")
-                        .text(d => { return d.label; });
+                        .text(d => { return d.type; });
                 },
                 exit => exit.remove()
             );
     }
 
     updateEdges() {
+        // TODO: rotate label 180deg when it's upside down using smth like .style("transform", "rotate(180deg)")
         this.paths.selectAll(".edge")
             .data(this.edges, e => e.id)
             .join(
@@ -268,15 +264,11 @@ class Graph {
                         .classed("edge", true)
                         .on("click", (event, d) => {
                             event.stopPropagation();
-                            if (event.shiftKey) {
-                                d.editEdgeLabel(this.paths, this.plot);
-                            } else {
-                                this.state.selectedEdge = d;
-                                this.state.selectedNode = null;
-                                this.showAttributes(d);
-                                this.showData(d);
-                                this.update();
-                            }
+                            this.state.selectedEdge = d;
+                            this.state.selectedNode = null;
+                            this.showAttributes(d);
+                            this.showData(d);
+                            this.update();
                         })
                         .on("mousedown", (event, d) => {
                             event.stopPropagation();
@@ -308,19 +300,38 @@ class Graph {
                 .classed("node-data-table", true)
                 .append('tbody');
 
-            // Add a row for the node id
+            // Add a row for the id
             const idRow = table.append("tr")
             idRow.append("td").text("ID:")
             idRow.append("td").text(nodeOrEdge.id);
 
-            // Add a row for the node type
+            // Add a row for the type
             const typeRow = table.append("tr");
             typeRow.append("td").text("Type:");
-            typeRow.append("td").append("input")
+            if (typeof nodeOrEdge.nodeType === 'undefined') { // is edge
+                nodeOrEdge.type = nodeOrEdge.generateType(); // auto update based on doc and ent types
+                typeRow.append("td").text(nodeOrEdge.type); // do not allow manual modification
+            } else {
+                let nodeType = document.getElementById("type-" + nodeOrEdge.id);
+                typeRow.append("td").append("input")
+                    .attr("type", "text")
+                    .attr("value", nodeOrEdge.type)
+                    .on("input", function() {
+                        nodeOrEdge.type = this.value;
+                        nodeType.textContent = this.value;
+                    });
+            }
+
+            // Add a row for the label
+            const labelRow = table.append("tr");
+            labelRow.append("td").text("Label:");
+            let nodeOrEdgeLabel = document.getElementById("label-" + nodeOrEdge.id);
+            labelRow.append("td").append("input")
                 .attr("type", "text")
-                .attr("value", nodeOrEdge.type)
+                .attr("value", nodeOrEdge.label)
                 .on("input", function() {
-                    nodeOrEdge.type = this.value;
+                    nodeOrEdge.label = this.value;
+                    nodeOrEdgeLabel.textContent = this.value;
                 });
 
             // Show the table in the node data element
@@ -374,17 +385,11 @@ class Graph {
 
             attributeRows.each(function(d) {
                 const row = d3.select(this);
-                const attributeIndex = d[0]
-                const rowData = d[1]
+                const attributeIndex = d[0];
+                const rowData = d[1];
                 row.append('td').text(rowData.key);
-                row.append('td').attr('contentEditable', true).text(rowData.value)
-                    .on('input', function() {
-                        nodeOrEdge.attributes[d[0]].value = this.innerText;
-                    });
-                row.append('td').attr('contentEditable', true).text(rowData.type)
-                    .on('input', function() {
-                        nodeOrEdge.attributes[d[0]].type = this.innerText;
-                    });
+                row.append('td').text(rowData.value);
+                row.append('td').text(rowData.type);
                 row.append('td').append('button').text('x')
                     .on('click', () => {
                         delete nodeOrEdge.attributes[d[0]];
@@ -541,7 +546,7 @@ class Graph {
             const entity = edge.source.nodeType === GraphNode.nodeTypes.ENT ? edge.source : edge.target;
             return {
                 edgeId: edge.id,
-                edgeType: edge.type,
+                edgeType: edge.generateType(),
                 label: edge.label,
                 documentId: document.id,
                 documentType: document.type,

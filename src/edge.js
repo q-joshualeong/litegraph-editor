@@ -1,12 +1,9 @@
 class GraphEdge {
     constructor(source, target, attributes, label) {
-        const document = source.nodeType === GraphNode.nodeTypes.DOC ? source : target;
-        const entity = source.nodeType === GraphNode.nodeTypes.ENT ? source : target;
-
         this.id = String(source.id) + "+" + String(target.id);
         this.source = source;
         this.target = target;
-        this.type = document.type + '-' + entity.type;
+        this.type = this.generateType();
         this.label = (label != "" && typeof label !== 'undefined') ? label : this.type + this.id;
         this.attributes = attributes;
     }
@@ -19,6 +16,12 @@ class GraphEdge {
         return "M" + sourceX + "," + sourceY + "L" + targetX + "," + targetY;
     }
 
+    generateType() {
+        const document = this.source.nodeType === GraphNode.nodeTypes.DOC ? this.source : this.target;
+        const entity = this.source.nodeType === GraphNode.nodeTypes.ENT ? this.source : this.target;
+        return document.type + '-' + entity.type;
+    }
+
     static makeEdge(edges) {
         edges.append("path")
             .attr("id", e => e.id)
@@ -28,40 +31,12 @@ class GraphEdge {
             });
 
         edges.append("text")
-            .attr("class", "edge-label")
             .attr("dy", - 15)
             .append("textPath")
+            .attr("id", e => "label-" + e.id)
             .attr("xlink:href", e => "#" + e.id)
             .attr("text-anchor", "middle")
             .attr("startOffset", "50%")
             .text(e => e.label);
-    }
-
-    editEdgeLabel(paths, plot) {
-        const selection = paths.selectAll('g').filter(dval => {
-            return dval.id === this.id;
-        });
-        // hide current label
-        const text = selection.selectAll("text").classed("hidden", true);
-        // add intermediate editable paragraph
-        const d3txt = plot.selectAll("foreignObject")
-            .data([this])
-            .enter()
-            .append("foreignObject")
-            // TODO: rotate via transform: rotate(20deg);
-            .attr("x", this.target.x - (this.target.x - this.source.x) / 2)
-            .attr("y", this.target.y - (this.target.y - this.source.y) / 2)
-            .attr("height", 100)
-            .attr("width", 100)
-            .append("xhtml:div")
-            //.style("transform", "rotate(20deg)")
-            .attr("id", "editable-p")
-            .attr("contentEditable", "true")
-            .style("text-align", "center")
-            .text(this.label)
-            .on("mousedown", (event, d) => {
-                event.stopPropagation();
-            });
-        d3txt.node().focus();
     }
 }
