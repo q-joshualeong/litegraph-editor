@@ -475,17 +475,25 @@ class Graph {
     }
 
     loadDocuments(nodes) {
-        this.maxNodeId = nodes.reduce(function (prev, curr) {
+        if (nodes.length === 1) {
+            this.maxNodeId = nodes[0].id;
+        } else {
+          this.maxNodeId = nodes.reduce(function (prev, curr) {
             return Math.max(prev.id, curr.id);
-        });
+          });
+        }
         this.nodes = this.nodes.concat(nodes);
         this.updateNodes(GraphNode.nodeTypes.DOC);
     }
 
     loadEntities(nodes) {
-        this.maxNodeId = nodes.reduce(function (prev, curr) {
+        if (nodes.length === 1) {
+            this.maxNodeId = nodes[0].id;
+        } else {
+          this.maxNodeId = nodes.reduce(function (prev, curr) {
             return Math.max(prev.id, curr.id);
-        });
+          });
+        }
         this.nodes = this.nodes.concat(nodes);
         this.updateNodes(GraphNode.nodeTypes.ENT);
     }
@@ -591,44 +599,46 @@ function convertLiteGraphAttributesToD3Attributes(attributes) {
     return result
 }
 
-function loadGraph() {
-    var files = document.getElementById('select-file').files;
-    if (files.length <= 0) {
-        return false;
-    }
+function loadGraph(files, fileType) {
 
     var fr = new FileReader();
 
     fr.onload = function (e) {
-        try {
-            const result = JSON.parse(e.target.result);
-            const docs = result.documents.map(doc => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
-                return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.label);
-            })
-            const entities = result.entities.map(ent => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
-                return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.label);
-            })
-            const edges = result.edges.map( edge => {
-                const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
-                return new GraphEdge(
-                    {id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType},
-                    {id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType},
-                    attributes,
-                    edge.label);
-                }
-            );
-            graph.loadDocuments(docs);
-            graph.loadEntities(entities);
-            graph.loadEdges(edges);
-        } catch (err) {
-            window.alert("Error loading graph from file!\nError message: " + err.message);
-        }
-    }
-
+      try {
+          const result = JSON.parse(e.target.result);
+          const docs = result.documents.map(doc => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(doc.attributes);
+              return new GraphNode(doc.documentId, GraphNode.nodeTypes.DOC, doc.documentType, attributes, [100,100], doc.documentType + "-" + doc.documentId);
+          })
+          const entities = result.entities.map(ent => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(ent.attributes);
+              return new GraphNode(ent.entityId, GraphNode.nodeTypes.ENT, ent.entityType, attributes, [200, 200], ent.entityType + "-" + ent.entityId);
+          })
+          const edges = result.edges.map( edge => {
+              const attributes = convertLiteGraphAttributesToD3Attributes(edge.attributes);
+              return new GraphEdge(
+                  {id: edge.documentId, nodeType: GraphNode.nodeTypes.DOC, type: edge.documentType},
+                  {id: edge.entityId, nodeType: GraphNode.nodeTypes.ENT, type: edge.entityType},
+                  attributes,
+                  edge.label);
+              }
+          );
+          graph.loadDocuments(docs);
+          graph.loadEntities(entities);
+          graph.loadEdges(edges);
+      } catch (err) {
+          window.alert("Error loading graph from file!\nError message: " + err.message);
+      }
+  }
+  if (fileType === "CSV") {
+    fr.readAsText(files);
+  } else if (fileType === "JSON") {
     fr.readAsText(files.item(0));
+  } else {
+    console.log("Invalid file format entered.");
+  }
 }
+
 
 const graph = new Graph({
     svg: d3.select("#graph"),
@@ -640,13 +650,241 @@ d3.select("#delete-graph").on("click", () => {
     graph.clear("Do you really want to delete the whole graph?");
 });
 
-d3.select("#download-input").on("click", () => {
-    saveAs(graph.toLiteGraph(), "dag-download.json");
+d3.select("#documents-file").on("click", () => {
+    graph.clear("Do you really want to delete the whole graph?");
 });
 
-d3.select("#select-file").on("input", function () {
-    if (graph.clear("This will clear the current graph. Continue?")) {
-        loadGraph();
-        this.value = null; // Allow repeated uploads of the same file (same name)
+d3.select("#entity-file").on("click", () => {
+    graph.clear("Do you really want to delete the whole graph?");
+});
+
+d3.select("#edges-file").on("click", () => {
+    graph.clear("Do you really want to delete the whole graph?");
+});
+
+// Get references to the elements
+const downloadButton = document.getElementById("download-button");
+const downloadFormat = document.getElementById("download-format-select");
+const uploadButton = document.getElementById("upload-button");
+const uploadFormat = document.getElementById("upload-format-select");
+
+downloadButton.addEventListener("click", function () {
+  downloadFormat.style.display = downloadFormat.style.display === "none" ? "block" : "none";
+});
+
+uploadButton.addEventListener("click", function () {
+  uploadFormat.style.display = uploadFormat.style.display === "none" ? "block" : "none";
+});
+
+
+downloadFormat.addEventListener("change", function () {
+  const selectedFileType = downloadFormat.value;
+  downloadAs(selectedFileType);
+  downloadFormat.style.display = "none";
+  downloadFormat.value = "default";
+});
+
+uploadFormat.addEventListener("change", function () {
+  const selectedFileType = uploadFormat.value;
+  uploadAs(selectedFileType);
+  uploadFormat.style.display = "none";
+  uploadFormat.value = "default";
+});
+
+function downloadAs(fileType) {
+  if (fileType === "JSON") {
+    saveAs(graph.toLiteGraph(), "dag-download.json");
+  } else if (fileType === "CSV") {
+    const reader = new FileReader();
+    reader.onload = function () {
+      const data = JSON.parse(reader.result);
+
+      const documentsCSV = convertToCSV(data.documents);
+      const entitiesCSV = convertToCSV(data.entities);
+      const edgesCSV = convertToCSV(data.edges);
+
+      documentsBlob = new Blob([documentsCSV], { type: "text/csv;charset=utf-8" });
+      const entitiesBlob = new Blob([entitiesCSV], { type: "text/csv;charset=utf-8" });
+      const edgesBlob = new Blob([edgesCSV], { type: "text/csv;charset=utf-8" });
+
+      saveAs(documentsBlob, 'Documents.csv');
+      saveAs(entitiesBlob, 'Entities.csv');
+      saveAs(edgesBlob, 'Edges.csv');
     };
-})
+    reader.readAsText(graph.toLiteGraph());
+  } else {
+    console.log("Invalid file format entered.");
+  }
+}
+
+
+function convertToCSV(data) {
+  if (data.length === 0) {
+    return null;
+  }
+
+  const csvRows = [];
+  const headers = Object.keys(data[0]);
+
+  // Flatten nested attributes
+  const flattenedHeaders = [];
+  for (const header of headers) {
+    if (typeof data[0][header] === 'object' && data[0][header] !== null) {
+      const attributeKeys = Object.keys(data[0][header]);
+      for (const attributeKey of attributeKeys) {
+        if (header === "attributes") {
+          const nestedAttributeKeys = Object.keys(data[0][header][attributeKey]);
+          for (const nestedAttributeKey of nestedAttributeKeys) {
+            const flattenedHeader = `${header}_${attributeKey}_${nestedAttributeKey}`;
+            flattenedHeaders.push(flattenedHeader);
+          }
+        } else {
+          const flattenedHeader = `${header}_${attributeKey}`;
+          flattenedHeaders.push(flattenedHeader);
+        }
+      }
+    } else {
+      flattenedHeaders.push(header);
+    }
+  }
+
+  csvRows.push(
+    flattenedHeaders
+      .map(header => header.replace("attributes_", '').replace("Attributes", ''))
+      .join(',')
+  );
+
+  for (const item of data) {
+    const values = flattenedHeaders.map(header => {
+      let value = item;
+      const attributeKeys = header.split('_');
+      for (const attributeKey of attributeKeys) {
+        if (value === null || typeof value !== 'object') {
+          value = null;
+          break;
+        }
+        value = value[attributeKey];
+      }
+      return value;
+    });
+
+    csvRows.push(values.join(','));
+  }
+
+  const csvData = csvRows.join('\n');
+  return csvData;
+}
+
+function selectCSVFiles() {
+  const promptMessage = "Select the Document, Entities, and Edges CSV files.";
+  const confirmed = window.confirm(promptMessage);
+  if (confirmed) {
+    const fileInput = d3.select("#select-csv-files");
+    fileInput.on("change", function () {
+      const files = Array.from(this.files);
+      const filePromises = files.map(parseFile);
+      Promise.all(filePromises)
+        .then(function (data) {
+          handleCSVFiles(data);
+        })
+        .catch(function (error) {
+          console.error("Error parsing files:", error);
+        });
+    this.value = null; // Allow repeated uploads of the same file (same name)
+    });
+    fileInput.node().click();
+  }
+}
+
+function parseFile(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const fileData = event.target.result;
+      const csvData = parseCSV(fileData);
+      resolve({ fileName: file.name, data: csvData });
+    };
+    reader.onerror = function (event) {
+      reject(event.target.error);
+    };
+    reader.readAsText(file);
+  });
+}
+
+function handleCSVFiles(filesData) {
+  let documentsData = [];
+  let entitiesData = [];
+  let edgesData = [];
+
+  filesData.forEach(function (fileData) {
+    const fileName = fileData.fileName.toLowerCase();
+    const data = fileData.data;
+
+    if (fileName.includes("documents")) {
+      documentsData = data;
+    } else if (fileName.includes("entities")) {
+      entitiesData = data;
+    } else if (fileName.includes("edges")) {
+      edgesData = data;
+    }
+  });
+
+  combineData(documentsData, entitiesData, edgesData);
+}
+
+function combineData(documentsData, entitiesData, edgesData) {
+  if (entitiesData.length > 0) {
+      entitiesData[0].records = []; // adds the empty entity records array
+  }
+  const jsonStr = new window.Blob([window.JSON.stringify(
+                                  {
+                                      documents: documentsData,
+                                      entities: entitiesData,
+                                      edges: edgesData
+                                  }
+                                  , null, 2)], { type: "text/plain;charset=utf-8" })
+  loadGraph(jsonStr, "CSV")
+}
+
+function uploadAs(fileType) {
+  if (fileType === "JSON" && graph.clear("This will clear the current graph. Continue?")) {
+    d3.select("#select-json-file").node().click();
+    d3.select("#select-json-file").on("change", function () {
+      var files = document.getElementById('select-json-file').files;
+      loadGraph(files, fileType);
+      this.value = null; // Allow repeated uploads of the same file (same name)
+    });
+  } else if (fileType === "CSV" && graph.clear("This will clear the current graph. Continue?")) {
+    selectCSVFiles();
+  }
+}
+
+function parseCSV(csvData) {
+  const rows = csvData.trim().split('\n');
+  const headers = rows.shift().split(',');
+
+  const jsonData = [];
+
+    for (const row of rows) {
+      const values = row.split(',');
+      const documentData = {};
+      const attributes = {};
+
+      for (let i = 0; i < headers.length; i++) {
+        if (headers[i].includes("_")) {
+          const [dataType, attributeName] = headers[i].split("_");
+          const attributeType = `${dataType}Attributes`;
+          attributes[attributeType] = attributes[attributeType] || {}; // Initialize nested object
+          attributes[attributeType][attributeName] = values[i];
+        } else if (!headers[i].includes("_") && headers[i].includes("Id") && headers[i] !== "edgeId") {
+          documentData[headers[i]] = parseInt(values[i]);
+        } else {
+          documentData[headers[i]] = values[i];
+        }
+      }
+
+      documentData.attributes = attributes;
+      jsonData.push(documentData);
+    }
+    return jsonData;
+}
